@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Serve Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100%;
+            min-height: 100dvh;
+            min-height: -webkit-fill-available;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        header {
+            padding: 12px 16px;
+            padding-top: max(12px, env(safe-area-inset-top));
+            background: #16213e;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .match-info {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .turn-info {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .player-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .player-input label {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .player-input input {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            background: #0f3460;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .buttons-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            gap: 12px;
+            min-height: 300px;
+        }
+
+        .serve-btn {
+            border: none;
+            border-radius: 16px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s, opacity 0.1s;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .serve-btn:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+
+        .serve-btn .count {
+            font-size: 48px;
+            margin-top: 4px;
+        }
+
+        .serve-btn .turn-count {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        .btn-over {
+            flex: 4;
+            background: linear-gradient(145deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .btn-row {
+            flex: 3;
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-net {
+            flex: 1;
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn-foot {
+            flex: 1;
+            background: linear-gradient(145deg, #f39c12, #d68910);
+            color: white;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 0 12px 12px;
+            flex-shrink: 0;
+        }
+
+        .control-btn {
+            flex: 1 1 calc(50% - 4px);
+            min-width: 80px;
+            padding: 14px 8px;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #0f3460;
+            color: #fff;
+        }
+
+        .control-btn:active {
+            opacity: 0.8;
+        }
+
+        .control-btn.undo {
+            background: #4a4a6a;
+        }
+
+        .control-btn.next-turn {
+            background: #8e44ad;
+        }
+
+        footer {
+            padding: 12px 16px;
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+            background: #16213e;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .stats {
+            font-size: 14px;
+        }
+
+        .stats .rate {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2ecc71;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 4px;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .history-btn {
+            position: absolute;
+            top: max(12px, env(safe-area-inset-top));
+            right: 12px;
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 100;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal.open {
+            display: block;
+        }
+
+        .modal-content {
+            padding: 20px;
+            padding-top: max(20px, env(safe-area-inset-top));
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 32px;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .match-card {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .match-card h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #aaa;
+        }
+
+        .set-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #0f3460;
+        }
+
+        .turn-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 8px;
+            font-size: 13px;
+            background: rgba(15, 52, 96, 0.5);
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+
+        .turn-row.set-total {
+            background: #0f3460;
+            font-weight: 600;
+        }
+
+        .turn-stats {
+            display: flex;
+            gap: 10px;
+        }
+
+        .turn-stats .over { color: #2ecc71; }
+        .turn-stats .net { color: #e74c3c; }
+        .turn-stats .foot { color: #f39c12; }
+
+        .export-btn {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #2ecc71;
+            color: #fff;
+        }
+
+        .export-btn:active {
+            opacity: 0.8;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: max(80px, calc(60px + env(safe-area-inset-bottom)));
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 200;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .below-fold {
+            background: #0d1b2a;
+            padding: 16px;
+            border-top: 1px solid #16213e;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #aaa;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .turn-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .turn-nav-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: #0f3460;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .turn-nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .turn-nav-btn:active:not(:disabled) {
+            opacity: 0.8;
+        }
+
+        .turn-nav-display {
+            font-size: 16px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .current-set-summary {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #0f3460;
+        }
+
+        .summary-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .summary-rate {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2ecc71;
+        }
+
+        .turns-list {
+            max-height: 200px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .turn-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            background: rgba(15, 52, 96, 0.5);
+            font-size: 13px;
+        }
+
+        .turn-item.current {
+            background: #8e44ad;
+        }
+
+        .turn-item-stats {
+            display: flex;
+            gap: 8px;
+        }
+
+        .turn-item-stats .over { color: #2ecc71; }
+        .turn-item-stats .net { color: #e74c3c; }
+        .turn-item-stats .foot { color: #f39c12; }
+
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .quick-action-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #16213e;
+            color: #fff;
+        }
+
+        .quick-action-btn.danger {
+            background: #c0392b;
+        }
+
+        .quick-action-btn:active {
+            opacity: 0.8;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <div class="match-info" id="matchInfo">Match 1 - Set 1</div>
+        <div class="turn-info" id="turnInfo">Turn 1</div>
+        <div class="player-input">
+            <label>Player:</label>
+            <input type="text" id="playerName" placeholder="Enter name">
+        </div>
+    </header>
+
+    <button class="history-btn" id="historyBtn">📋</button>
+
+    <div class="buttons-container">
+        <button class="serve-btn btn-over" data-type="over">
+            OVER
+            <span class="count" id="overCount">0</span>
+            <span class="turn-count" id="overTurnCount">(turn: 0)</span>
+        </button>
+        <div class="btn-row">
+            <button class="serve-btn btn-net" data-type="net">
+                NET
+                <span class="count" id="netCount">0</span>
+                <span class="turn-count" id="netTurnCount">(turn: 0)</span>
+            </button>
+            <button class="serve-btn btn-foot" data-type="foot">
+                FOOT
+                <span class="count" id="footCount">0</span>
+                <span class="turn-count" id="footTurnCount">(turn: 0)</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn next-turn" id="nextTurnBtn">Next Turn</button>
+        <button class="control-btn undo" id="undoBtn">Undo</button>
+        <button class="control-btn" id="newSetBtn">New Set</button>
+        <button class="control-btn" id="newMatchBtn">New Match</button>
+    </div>
+
+    <footer>
+        <div class="stats">
+            Set: <span class="rate" id="successRate">0%</span>
+        </div>
+        <div class="stats-row">
+            <span>Turn: <span id="turnRate">0%</span></span>
+            <span>Set total: <span id="setTotal">0</span> serves</span>
+        </div>
+    </footer>
+
+    <div class="below-fold">
+        <div class="section-title">Turn Navigation</div>
+        <div class="turn-nav">
+            <button class="turn-nav-btn" id="prevTurnBtn">&larr;</button>
+            <div class="turn-nav-display">Turn <span id="currentTurnNum">1</span> of <span id="totalTurns">1</span></div>
+            <button class="turn-nav-btn" id="nextTurnNavBtn">&rarr;</button>
+        </div>
+
+        <div class="section-title">Current Set Summary</div>
+        <div class="current-set-summary">
+            <div class="summary-header">
+                <h3>Set <span id="summarySetNum">1</span></h3>
+                <span class="summary-rate"><span id="summarySetRate">0</span>%</span>
+            </div>
+            <div class="turns-list" id="turnsList"></div>
+        </div>
+
+        <div class="section-title">Quick Actions</div>
+        <div class="quick-actions">
+            <button class="quick-action-btn" id="deleteEmptyTurnBtn">Delete Empty Turn</button>
+            <button class="quick-action-btn danger" id="clearSetBtn">Clear Set Data</button>
+        </div>
+
+        <div class="section-title" style="margin-top: 24px;">Start Fresh</div>
+        <div class="quick-actions">
+            <button class="quick-action-btn" id="exportAndResetBtn">Export & New Player</button>
+            <button class="quick-action-btn danger" id="resetAllBtn">Reset All Data</button>
+        </div>
+        <p style="font-size: 11px; color: #666; margin-top: 8px; text-align: center;">
+            "Export & New Player" downloads your data first, then resets for a new player.
+        </p>
+    </div>
+
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Match History</h2>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <button class="export-btn" id="exportBtn">Export to CSV</button>
+            <div id="historyContent"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const STORAGE_KEY = 'volleyball-serve-tracker';
+        const DATA_VERSION = 2;
+
+        let data = loadData();
+        let lastAction = null;
+        let viewingTurnIndex = null; // null = latest turn
+
+        function loadData() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                return migrateData(parsed);
+            }
+            return createFreshData();
+        }
+
+        function migrateData(oldData) {
+            if (oldData.version === DATA_VERSION) return oldData;
+
+            // Migrate from v1 (flat sets) to v2 (turns within sets)
+            if (!oldData.version || oldData.version < 2) {
+                oldData.matches.forEach(match => {
+                    match.sets = match.sets.map(set => {
+                        if (set.turns) return set; // Already migrated
+                        return {
+                            turns: [{ over: set.over || 0, net: set.net || 0, foot: set.foot || 0 }]
+                        };
+                    });
+                });
+                oldData.version = DATA_VERSION;
+            }
+            return oldData;
+        }
+
+        function createFreshData() {
+            return {
+                version: DATA_VERSION,
+                playerName: '',
+                matches: [{
+                    id: 1,
+                    date: new Date().toISOString().split('T')[0],
+                    sets: [{ turns: [{ over: 0, net: 0, foot: 0 }] }]
+                }]
+            };
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function getCurrentMatch() {
+            return data.matches[data.matches.length - 1];
+        }
+
+        function getCurrentSet() {
+            const match = getCurrentMatch();
+            return match.sets[match.sets.length - 1];
+        }
+
+        function getCurrentTurn() {
+            const set = getCurrentSet();
+            const idx = viewingTurnIndex !== null ? viewingTurnIndex : set.turns.length - 1;
+            return set.turns[idx];
+        }
+
+        function getCurrentTurnIndex() {
+            const set = getCurrentSet();
+            return viewingTurnIndex !== null ? viewingTurnIndex : set.turns.length - 1;
+        }
+
+        function goToTurn(idx) {
+            const set = getCurrentSet();
+            if (idx < 0 || idx >= set.turns.length) return;
+            viewingTurnIndex = idx === set.turns.length - 1 ? null : idx;
+            lastAction = null;
+            updateDisplay();
+        }
+
+        function goToPrevTurn() {
+            const idx = getCurrentTurnIndex();
+            if (idx > 0) goToTurn(idx - 1);
+        }
+
+        function goToNextTurn() {
+            const set = getCurrentSet();
+            const idx = getCurrentTurnIndex();
+            if (idx < set.turns.length - 1) goToTurn(idx + 1);
+        }
+
+        function goToLatestTurn() {
+            viewingTurnIndex = null;
+            updateDisplay();
+        }
+
+        function getSetTotals(set) {
+            return set.turns.reduce((acc, turn) => ({
+                over: acc.over + turn.over,
+                net: acc.net + turn.net,
+                foot: acc.foot + turn.foot
+            }), { over: 0, net: 0, foot: 0 });
+        }
+
+        function updateDisplay() {
+            const match = getCurrentMatch();
+            const set = getCurrentSet();
+            const turn = getCurrentTurn();
+            const totals = getSetTotals(set);
+            const matchNum = data.matches.length;
+            const setNum = match.sets.length;
+            const turnIdx = getCurrentTurnIndex();
+            const turnNum = turnIdx + 1;
+            const isLatestTurn = viewingTurnIndex === null;
+
+            document.getElementById('matchInfo').textContent = `Match ${matchNum} - Set ${setNum}`;
+            document.getElementById('turnInfo').textContent = `Turn ${turnNum}`;
+            document.getElementById('playerName').value = data.playerName;
+
+            // Current turn counts on buttons (resets each turn)
+            document.getElementById('overCount').textContent = turn.over;
+            document.getElementById('netCount').textContent = turn.net;
+            document.getElementById('footCount').textContent = turn.foot;
+
+            // Set totals below
+            document.getElementById('overTurnCount').textContent = `(set: ${totals.over})`;
+            document.getElementById('netTurnCount').textContent = `(set: ${totals.net})`;
+            document.getElementById('footTurnCount').textContent = `(set: ${totals.foot})`;
+
+            // Stats
+            const setTotal = totals.over + totals.net + totals.foot;
+            const setRate = setTotal > 0 ? Math.round((totals.over / setTotal) * 100) : 0;
+            document.getElementById('successRate').textContent = `${setRate}%`;
+            document.getElementById('setTotal').textContent = setTotal;
+
+            const turnTotal = turn.over + turn.net + turn.foot;
+            const turnRate = turnTotal > 0 ? Math.round((turn.over / turnTotal) * 100) : 0;
+            document.getElementById('turnRate').textContent = `${turnRate}%`;
+
+            // Below fold updates
+            document.getElementById('currentTurnNum').textContent = turnNum;
+            document.getElementById('totalTurns').textContent = set.turns.length;
+            document.getElementById('summarySetNum').textContent = setNum;
+            document.getElementById('summarySetRate').textContent = setRate;
+
+            // Turn navigation buttons
+            document.getElementById('prevTurnBtn').disabled = turnIdx <= 0;
+            document.getElementById('nextTurnNavBtn').disabled = turnIdx >= set.turns.length - 1;
+
+            // Show indicator if viewing older turn
+            const turnInfo = document.getElementById('turnInfo');
+            if (!isLatestTurn) {
+                turnInfo.textContent = `Turn ${turnNum} (viewing old)`;
+                turnInfo.style.color = '#f39c12';
+            } else {
+                turnInfo.textContent = `Turn ${turnNum}`;
+                turnInfo.style.color = '#aaa';
+            }
+
+            // Turns list
+            const turnsList = document.getElementById('turnsList');
+            turnsList.innerHTML = set.turns.map((t, idx) => {
+                const tTotal = t.over + t.net + t.foot;
+                const tRate = tTotal > 0 ? Math.round((t.over / tTotal) * 100) : 0;
+                const isCurrent = idx === turnIdx;
+                const isLatest = idx === set.turns.length - 1;
+                return `<div class="turn-item ${isCurrent ? 'current' : ''}" data-turn="${idx}">
+                    <span>Turn ${idx + 1}${isCurrent ? ' *' : ''}${isLatest ? ' (latest)' : ''}</span>
+                    <div class="turn-item-stats">
+                        <span class="over">✓${t.over}</span>
+                        <span class="net">N${t.net}</span>
+                        <span class="foot">F${t.foot}</span>
+                        <span>(${tRate}%)</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // Delete empty turn button state
+            const isEmpty = turn.over === 0 && turn.net === 0 && turn.foot === 0;
+            document.getElementById('deleteEmptyTurnBtn').disabled = !isEmpty || set.turns.length <= 1;
+        }
+
+        function recordServe(type) {
+            const turn = getCurrentTurn();
+            const turnIdx = getCurrentTurnIndex();
+            lastAction = {
+                type,
+                matchIndex: data.matches.length - 1,
+                setIndex: getCurrentMatch().sets.length - 1,
+                turnIndex: turnIdx
+            };
+            turn[type]++;
+            saveData();
+            updateDisplay();
+        }
+
+        function undo() {
+            if (!lastAction) return;
+
+            // Undo "Next Turn" - remove empty turn
+            if (lastAction.type === 'newTurn') {
+                if (prevTurn()) {
+                    lastAction = null;
+                    showToast('Turn removed');
+                }
+                return;
+            }
+
+            // Undo serve recording
+            const match = data.matches[lastAction.matchIndex];
+            if (!match) return;
+            const set = match.sets[lastAction.setIndex];
+            if (!set) return;
+            const turn = set.turns[lastAction.turnIndex];
+            if (!turn) return;
+            if (turn[lastAction.type] > 0) {
+                turn[lastAction.type]--;
+                saveData();
+                updateDisplay();
+            }
+            lastAction = null;
+        }
+
+        function nextTurn() {
+            getCurrentSet().turns.push({ over: 0, net: 0, foot: 0 });
+            viewingTurnIndex = null; // Go to latest
+            lastAction = { type: 'newTurn' };
+            saveData();
+            updateDisplay();
+        }
+
+        function prevTurn() {
+            const set = getCurrentSet();
+            if (set.turns.length <= 1) return false;
+            const currentTurn = set.turns[set.turns.length - 1];
+            const isEmpty = currentTurn.over === 0 && currentTurn.net === 0 && currentTurn.foot === 0;
+            if (isEmpty) {
+                set.turns.pop();
+                saveData();
+                updateDisplay();
+                return true;
+            }
+            return false;
+        }
+
+        function newSet() {
+            getCurrentMatch().sets.push({ turns: [{ over: 0, net: 0, foot: 0 }] });
+            viewingTurnIndex = null;
+            lastAction = null;
+            saveData();
+            updateDisplay();
+        }
+
+        function newMatch() {
+            data.matches.push({
+                id: data.matches.length + 1,
+                date: new Date().toISOString().split('T')[0],
+                sets: [{ turns: [{ over: 0, net: 0, foot: 0 }] }]
+            });
+            viewingTurnIndex = null;
+            lastAction = null;
+            saveData();
+            updateDisplay();
+        }
+
+        function deleteEmptyTurn() {
+            const set = getCurrentSet();
+            const turnIdx = getCurrentTurnIndex();
+            const turn = set.turns[turnIdx];
+            const isEmpty = turn.over === 0 && turn.net === 0 && turn.foot === 0;
+
+            if (!isEmpty || set.turns.length <= 1) {
+                showToast('Can only delete empty turns');
+                return;
+            }
+
+            set.turns.splice(turnIdx, 1);
+            // Adjust viewing index
+            if (viewingTurnIndex !== null && viewingTurnIndex >= set.turns.length) {
+                viewingTurnIndex = set.turns.length - 1;
+            }
+            if (viewingTurnIndex === set.turns.length - 1) {
+                viewingTurnIndex = null;
+            }
+            lastAction = null;
+            saveData();
+            updateDisplay();
+            showToast('Turn deleted');
+        }
+
+        function clearSetData() {
+            if (!confirm('Clear all data for the current set?')) return;
+            const set = getCurrentSet();
+            set.turns = [{ over: 0, net: 0, foot: 0 }];
+            viewingTurnIndex = null;
+            lastAction = null;
+            saveData();
+            updateDisplay();
+            showToast('Set cleared');
+        }
+
+        function resetAllData() {
+            if (!confirm('This will delete ALL data for all matches. Are you sure?')) return;
+            if (!confirm('Really delete everything? This cannot be undone.')) return;
+            data = createFreshData();
+            viewingTurnIndex = null;
+            lastAction = null;
+            saveData();
+            updateDisplay();
+            showToast('All data cleared');
+            window.scrollTo(0, 0);
+        }
+
+        function exportAndReset() {
+            // Export first
+            exportCSV();
+            // Then ask to confirm reset
+            setTimeout(() => {
+                if (confirm('Data exported! Reset for a new player now?')) {
+                    data = createFreshData();
+                    viewingTurnIndex = null;
+                    lastAction = null;
+                    saveData();
+                    updateDisplay();
+                    showToast('Ready for new player!');
+                    window.scrollTo(0, 0);
+                }
+            }, 500);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function exportCSV() {
+            const rows = [['Player', 'Date', 'Match', 'Set', 'Turn', 'Over', 'Net', 'Foot', 'Total', 'Success Rate']];
+
+            data.matches.forEach((match, matchIdx) => {
+                match.sets.forEach((set, setIdx) => {
+                    set.turns.forEach((turn, turnIdx) => {
+                        const total = turn.over + turn.net + turn.foot;
+                        const rate = total > 0 ? Math.round((turn.over / total) * 100) : 0;
+                        rows.push([
+                            data.playerName || 'Unknown',
+                            match.date,
+                            matchIdx + 1,
+                            setIdx + 1,
+                            turnIdx + 1,
+                            turn.over,
+                            turn.net,
+                            turn.foot,
+                            total,
+                            rate + '%'
+                        ]);
+                    });
+                });
+            });
+
+            const csv = rows.map(row => row.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `serves-${data.playerName || 'player'}-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('CSV downloaded!');
+        }
+
+        function showHistory() {
+            const content = document.getElementById('historyContent');
+            let html = '';
+
+            data.matches.slice().reverse().forEach((match, idx) => {
+                const matchNum = data.matches.length - idx;
+                html += `<div class="match-card">
+                    <h3>Match ${matchNum} - ${match.date}</h3>`;
+
+                match.sets.forEach((set, setIdx) => {
+                    const totals = getSetTotals(set);
+                    const setTotal = totals.over + totals.net + totals.foot;
+                    const setRate = setTotal > 0 ? Math.round((totals.over / setTotal) * 100) : 0;
+
+                    html += `<div class="set-header">Set ${setIdx + 1}</div>`;
+
+                    set.turns.forEach((turn, turnIdx) => {
+                        const turnTotal = turn.over + turn.net + turn.foot;
+                        const turnRate = turnTotal > 0 ? Math.round((turn.over / turnTotal) * 100) : 0;
+                        html += `<div class="turn-row">
+                            <span>Turn ${turnIdx + 1}</span>
+                            <div class="turn-stats">
+                                <span class="over">✓${turn.over}</span>
+                                <span class="net">N${turn.net}</span>
+                                <span class="foot">F${turn.foot}</span>
+                                <span>(${turnRate}%)</span>
+                            </div>
+                        </div>`;
+                    });
+
+                    html += `<div class="turn-row set-total">
+                        <span>Set Total</span>
+                        <div class="turn-stats">
+                            <span class="over">✓${totals.over}</span>
+                            <span class="net">N${totals.net}</span>
+                            <span class="foot">F${totals.foot}</span>
+                            <span>(${setRate}%)</span>
+                        </div>
+                    </div>`;
+                });
+
+                html += '</div>';
+            });
+
+            content.innerHTML = html || '<p>No matches recorded yet.</p>';
+            document.getElementById('historyModal').classList.add('open');
+        }
+
+        // Event listeners
+        document.querySelectorAll('.serve-btn').forEach(btn => {
+            btn.addEventListener('click', () => recordServe(btn.dataset.type));
+        });
+
+        document.getElementById('nextTurnBtn').addEventListener('click', nextTurn);
+        document.getElementById('newSetBtn').addEventListener('click', newSet);
+        document.getElementById('newMatchBtn').addEventListener('click', newMatch);
+        document.getElementById('undoBtn').addEventListener('click', undo);
+        document.getElementById('historyBtn').addEventListener('click', showHistory);
+        document.getElementById('exportBtn').addEventListener('click', exportCSV);
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('historyModal').classList.remove('open');
+        });
+
+        document.getElementById('playerName').addEventListener('input', (e) => {
+            data.playerName = e.target.value;
+            saveData();
+        });
+
+        // Below fold controls
+        document.getElementById('prevTurnBtn').addEventListener('click', goToPrevTurn);
+        document.getElementById('nextTurnNavBtn').addEventListener('click', goToNextTurn);
+        document.getElementById('deleteEmptyTurnBtn').addEventListener('click', deleteEmptyTurn);
+        document.getElementById('clearSetBtn').addEventListener('click', clearSetData);
+        document.getElementById('exportAndResetBtn').addEventListener('click', exportAndReset);
+        document.getElementById('resetAllBtn').addEventListener('click', resetAllData);
+
+        // Click on turn in list to navigate
+        document.getElementById('turnsList').addEventListener('click', (e) => {
+            const turnItem = e.target.closest('.turn-item');
+            if (turnItem) {
+                const idx = parseInt(turnItem.dataset.turn);
+                goToTurn(idx);
+            }
+        });
+
+        // Register service worker - updates silently on fresh load
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        // Initial display
+        updateDisplay();
+    </script>
+</body>
+</html>

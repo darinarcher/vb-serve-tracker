@@ -1,0 +1,18 @@
+{
+  "name": "Volleyball Serve Tracker",
+  "short_name": "Serve Tracker",
+  "description": "Track volleyball serves during matches",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%232ecc71'/><text x='50' y='65' font-size='40' text-anchor='middle' fill='white'>🏐</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
