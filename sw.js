@@ -1,7 +1,8 @@
 const CACHE_NAME = 'serve-tracker-v7';
 const ASSETS = [
   'index.html',
-  'manifest.json'
+  'manifest.json',
+  'icons/icon.svg'
 ];
 
 self.addEventListener('install', (event) => {

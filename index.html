@@ -472,6 +472,34 @@
             opacity: 0.8;
         }
 
+        .viewing-old-banner {
+            background: #f39c12;
+            color: #000;
+            text-align: center;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .viewing-old-banner button {
+            background: #1a1a2e;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        .serve-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
     </style>
 </head>
 <body>
@@ -485,6 +513,10 @@
     </header>
 
     <button class="history-btn" id="historyBtn">📋</button>
+
+    <div class="viewing-old-banner" id="viewingOldBanner" style="display: none;">
+        Viewing Turn <span id="viewingOldTurnNum"></span> — <button id="returnToLatestBtn">Return to Latest</button>
+    </div>
 
     <div class="buttons-container">
         <button class="serve-btn btn-over" data-type="over">
@@ -554,7 +586,17 @@
         <p style="font-size: 11px; color: #666; margin-top: 8px; text-align: center;">
             "Export & New Player" downloads your data first, then resets for a new player.
         </p>
+        <p style="font-size: 11px; color: #444; margin-top: 24px; text-align: center;">
+            Serve Tracker v2.1.0
+        </p>
     </div>
+
+    <noscript>
+        <div style="background: #e74c3c; color: #fff; padding: 24px; text-align: center; font-family: sans-serif;">
+            <h2>JavaScript Required</h2>
+            <p>Serve Tracker requires JavaScript to run. Please enable JavaScript in your browser settings.</p>
+        </div>
+    </noscript>
 
     <div class="modal" id="historyModal">
         <div class="modal-content">
@@ -668,6 +710,10 @@
             updateDisplay();
         }
 
+        function isTurnEmpty(turn) {
+            return turn.over === 0 && turn.net === 0 && turn.foot === 0;
+        }
+
         function getSetTotals(set) {
             return set.turns.reduce((acc, turn) => ({
                 over: acc.over + turn.over,
@@ -721,6 +767,18 @@
             document.getElementById('prevTurnBtn').disabled = turnIdx <= 0;
             document.getElementById('nextTurnNavBtn').disabled = turnIdx >= set.turns.length - 1;
 
+            // Viewing old turn: show banner, disable serve buttons
+            const banner = document.getElementById('viewingOldBanner');
+            const serveBtns = document.querySelectorAll('.serve-btn');
+            if (!isLatestTurn) {
+                banner.style.display = '';
+                document.getElementById('viewingOldTurnNum').textContent = turnNum;
+                serveBtns.forEach(btn => btn.disabled = true);
+            } else {
+                banner.style.display = 'none';
+                serveBtns.forEach(btn => btn.disabled = false);
+            }
+
             // Show indicator if viewing older turn
             const turnInfo = document.getElementById('turnInfo');
             if (!isLatestTurn) {
@@ -750,11 +808,11 @@
             }).join('');
 
             // Delete empty turn button state
-            const isEmpty = turn.over === 0 && turn.net === 0 && turn.foot === 0;
-            document.getElementById('deleteEmptyTurnBtn').disabled = !isEmpty || set.turns.length <= 1;
+            document.getElementById('deleteEmptyTurnBtn').disabled = !isTurnEmpty(turn) || set.turns.length <= 1;
         }
 
         function recordServe(type) {
+            if (viewingTurnIndex !== null) return; // Prevent edits to old turns
             const turn = getCurrentTurn();
             const turnIdx = getCurrentTurnIndex();
             lastAction = {
@@ -764,6 +822,7 @@
                 turnIndex: turnIdx
             };
             turn[type]++;
+            if (navigator.vibrate) navigator.vibrate(50);
             saveData();
             updateDisplay();
         }
@@ -807,8 +866,7 @@
             const set = getCurrentSet();
             if (set.turns.length <= 1) return false;
             const currentTurn = set.turns[set.turns.length - 1];
-            const isEmpty = currentTurn.over === 0 && currentTurn.net === 0 && currentTurn.foot === 0;
-            if (isEmpty) {
+            if (isTurnEmpty(currentTurn)) {
                 set.turns.pop();
                 saveData();
                 updateDisplay();
@@ -818,6 +876,7 @@
         }
 
         function newSet() {
+            if (!confirm('Start a new set?')) return;
             getCurrentMatch().sets.push({ turns: [{ over: 0, net: 0, foot: 0 }] });
             viewingTurnIndex = null;
             lastAction = null;
@@ -826,8 +885,9 @@
         }
 
         function newMatch() {
+            if (!confirm('Start a new match?')) return;
             data.matches.push({
-                id: data.matches.length + 1,
+                id: Date.now(),
                 date: new Date().toISOString().split('T')[0],
                 sets: [{ turns: [{ over: 0, net: 0, foot: 0 }] }]
             });
@@ -841,9 +901,8 @@
             const set = getCurrentSet();
             const turnIdx = getCurrentTurnIndex();
             const turn = set.turns[turnIdx];
-            const isEmpty = turn.over === 0 && turn.net === 0 && turn.foot === 0;
 
-            if (!isEmpty || set.turns.length <= 1) {
+            if (!isTurnEmpty(turn) || set.turns.length <= 1) {
                 showToast('Can only delete empty turns');
                 return;
             }
@@ -1024,6 +1083,8 @@
             data.playerName = e.target.value;
             saveData();
         });
+
+        document.getElementById('returnToLatestBtn').addEventListener('click', goToLatestTurn);
 
         // Below fold controls
         document.getElementById('prevTurnBtn').addEventListener('click', goToPrevTurn);
