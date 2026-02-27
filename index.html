@@ -575,6 +575,9 @@
         <div class="section-title">Quick Actions</div>
         <div class="quick-actions">
             <button class="quick-action-btn" id="deleteEmptyTurnBtn">Delete Empty Turn</button>
+            <button class="quick-action-btn" id="deleteEmptySetBtn">Delete Empty Set</button>
+        </div>
+        <div class="quick-actions" style="margin-top: 8px;">
             <button class="quick-action-btn danger" id="clearSetBtn">Clear Set Data</button>
         </div>
 
@@ -714,6 +717,10 @@
             return turn.over === 0 && turn.net === 0 && turn.foot === 0;
         }
 
+        function isSetEmpty(set) {
+            return set.turns.every(isTurnEmpty);
+        }
+
         function getSetTotals(set) {
             return set.turns.reduce((acc, turn) => ({
                 over: acc.over + turn.over,
@@ -809,6 +816,8 @@
 
             // Delete empty turn button state
             document.getElementById('deleteEmptyTurnBtn').disabled = !isTurnEmpty(turn) || set.turns.length <= 1;
+            // Delete empty set button state
+            document.getElementById('deleteEmptySetBtn').disabled = !isSetEmpty(set) || match.sets.length <= 1;
         }
 
         function recordServe(type) {
@@ -877,11 +886,35 @@
 
         function newSet() {
             if (!confirm('Start a new set?')) return;
-            getCurrentMatch().sets.push({ turns: [{ over: 0, net: 0, foot: 0 }] });
+            const match = getCurrentMatch();
+            // Auto-remove the current set if it was entirely empty (no serves recorded)
+            if (isSetEmpty(getCurrentSet()) && match.sets.length > 1) {
+                match.sets.pop();
+            }
+            match.sets.push({ turns: [{ over: 0, net: 0, foot: 0 }] });
             viewingTurnIndex = null;
             lastAction = null;
             saveData();
             updateDisplay();
+        }
+
+        function deleteEmptySet() {
+            const match = getCurrentMatch();
+            if (match.sets.length <= 1) {
+                showToast('Cannot delete the only set');
+                return;
+            }
+            const set = getCurrentSet();
+            if (!isSetEmpty(set)) {
+                showToast('Can only delete sets with no serves');
+                return;
+            }
+            match.sets.pop();
+            viewingTurnIndex = null;
+            lastAction = null;
+            saveData();
+            updateDisplay();
+            showToast('Empty set removed');
         }
 
         function newMatch() {
@@ -1090,6 +1123,7 @@
         document.getElementById('prevTurnBtn').addEventListener('click', goToPrevTurn);
         document.getElementById('nextTurnNavBtn').addEventListener('click', goToNextTurn);
         document.getElementById('deleteEmptyTurnBtn').addEventListener('click', deleteEmptyTurn);
+        document.getElementById('deleteEmptySetBtn').addEventListener('click', deleteEmptySet);
         document.getElementById('clearSetBtn').addEventListener('click', clearSetData);
         document.getElementById('exportAndResetBtn').addEventListener('click', exportAndReset);
         document.getElementById('resetAllBtn').addEventListener('click', resetAllData);
