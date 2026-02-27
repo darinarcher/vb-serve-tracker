@@ -7,9 +7,8 @@ redirects = []
 [functions."*"]
 
 [build]
-publish = "/Users/darinarcher/gt-demo/volleyball-tracker"
+publish = "."
 publishOrigin = "default"
-base = "/Users/darinarcher/gt-demo/volleyball-tracker"
 
 [build.environment]
 

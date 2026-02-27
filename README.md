@@ -6,14 +6,15 @@ A mobile-first Progressive Web App for tracking volleyball serve statistics duri
 
 ## Features
 
-- **Real-time serve tracking** - Tap to record successful serves, net faults, or foot faults
+- **Real-time serve tracking** - Tap to record successful serves, net faults, or foot faults with haptic feedback
 - **Turn-based organization** - Track serves by turn within sets and matches
 - **Live statistics** - See your success rate update instantly for both current turn and set totals
 - **Match history** - Review past matches with detailed per-turn breakdowns
-- **CSV export** - Download your data for analysis in spreadsheets
-- **Works offline** - Full PWA support with service worker caching
-- **Mobile optimized** - Designed for one-handed use during practice
-- **Data persistence** - All data saved locally in your browser
+- **CSV export** - Download your data for analysis in spreadsheets (properly escaped)
+- **Works offline** - Full PWA support with network-first service worker caching
+- **Mobile optimized** - Designed for one-handed use during practice with confirmation dialogs on irreversible actions
+- **Data persistence** - All data saved locally in your browser with crash recovery
+- **Empty set management** - Remove sets where a player didn't serve, or auto-cleanup on new set creation
 
 ## Tech Stack
 
@@ -56,7 +57,9 @@ A mobile-first Progressive Web App for tracking volleyball serve statistics duri
 vbtracker/
 ├── index.html      # Main app (HTML, CSS, and JS in single file)
 ├── manifest.json   # PWA manifest for installability
-├── sw.js           # Service worker for offline caching
+├── sw.js           # Service worker for offline caching (network-first)
+├── icons/
+│   └── icon.svg    # App icon (volleyball-themed SVG)
 └── .netlify/       # Netlify configuration
 ```
 
@@ -91,9 +94,10 @@ Simply drag the project folder to [Netlify Drop](https://app.netlify.com/drop).
 ### Navigation
 
 - **Next Turn** - Start a new turn within the current set
-- **New Set** - Start a new set within the current match
-- **New Match** - Start a completely new match
+- **New Set** - Start a new set within the current match (with confirmation)
+- **New Match** - Start a completely new match (with confirmation)
 - **Undo** - Reverse the last action
+- **Return to Latest** - When viewing an old turn, return to the current turn
 
 ### Data Management
 
@@ -101,6 +105,8 @@ Simply drag the project folder to [Netlify Drop](https://app.netlify.com/drop).
 - Tap the clipboard icon to view match history
 - Export to CSV for detailed analysis
 - Use "Export & New Player" to save data and reset for someone else
+- Use "Delete Empty Set" if a set was created but the player didn't serve
+- Use "Delete Empty Turn" to remove turns with no serves recorded
 
 ## Contributing
 
