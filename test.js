@@ -924,6 +924,58 @@ section('Edge Cases');
   assert(typeof escaped === 'string', 'EC-3b: csvEscape handles special chars without error');
 })();
 
+(function TC_2_11() {
+  const { app } = freshApp();
+  // Record 7 OVERs
+  for (let i = 0; i < 7; i++) app.recordServe('over');
+  assertEqual(app.getCurrentTurn().over, 7, 'TC-2.11a: 7 overs recorded');
+  // Undo all 7
+  for (let i = 0; i < 7; i++) app.undo();
+  assertEqual(app.getCurrentTurn().over, 0, 'TC-2.11b: 7 undos brings count back to 0');
+  // One more undo does nothing
+  app.undo();
+  assertEqual(app.getCurrentTurn().over, 0, 'TC-2.11c: 8th undo does nothing (stack empty)');
+})();
+
+(function TC_3_8() {
+  const { app, env } = freshApp();
+  env.setConfirmReturn(true);
+  // Record serves to populate undo stack
+  app.recordServe('over');
+  app.recordServe('net');
+  app.recordServe('foot');
+  assert(app.undoStack.length === 3, 'TC-3.8a: undo stack has 3 entries before newSet');
+  app.newSet();
+  assertEqual(app.undoStack.length, 0, 'TC-3.8b: undo stack cleared after newSet');
+  // Undo should do nothing now
+  app.undo();
+  const turn = app.getCurrentTurn();
+  assertEqual(turn.over + turn.net + turn.foot, 0, 'TC-3.8c: undo does nothing after newSet');
+})();
+
+(function TC_4_3() {
+  const { app, env } = freshApp();
+  env.setConfirmReturn(true);
+  // Record serves to populate undo stack
+  app.recordServe('over');
+  app.recordServe('over');
+  assert(app.undoStack.length === 2, 'TC-4.3a: undo stack has 2 entries before newMatch');
+  app.newMatch();
+  assertEqual(app.undoStack.length, 0, 'TC-4.3b: undo stack cleared after newMatch');
+  // Undo should do nothing now
+  app.undo();
+  const turn = app.getCurrentTurn();
+  assertEqual(turn.over + turn.net + turn.foot, 0, 'TC-4.3c: undo does nothing after newMatch');
+})();
+
+(function TC_13_1() {
+  // Verify version string is in the HTML source
+  const html = require('fs').readFileSync(require('path').join(__dirname, 'index.html'), 'utf8');
+  assertIncludes(html, 'Serve Tracker v2.2.0', 'TC-13.1a: version string present in HTML');
+  // Verify version text color is visible (#888 not #444)
+  assert(html.includes('color: #888') && html.includes('Serve Tracker v2.2.0'), 'TC-13.1b: version text uses visible color #888');
+})();
+
 (function EC_4() {
   const { app, env } = freshApp();
   env.setConfirmReturn(true);
