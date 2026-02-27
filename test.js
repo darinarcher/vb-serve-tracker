@@ -237,7 +237,7 @@ function initApp(env) {
   env.setConfirmReturn(true);
 
   // We wrap the app code so we can capture all globals it defines.
-  // The app uses: const STORAGE_KEY, DATA_VERSION, let data, lastAction, viewingTurnIndex
+  // The app uses: const STORAGE_KEY, DATA_VERSION, let data, undoStack, viewingTurnIndex
   // and defines many functions at top-level scope.
   const wrappedCode = `
     (function(localStorage, navigator, confirm, document, setTimeout, clearTimeout, window, URL, Blob, console) {
@@ -252,8 +252,8 @@ function initApp(env) {
         DATA_VERSION,
         get data() { return data; },
         set data(v) { data = v; },
-        get lastAction() { return lastAction; },
-        set lastAction(v) { lastAction = v; },
+        get undoStack() { return undoStack; },
+        set undoStack(v) { undoStack = v; },
         get viewingTurnIndex() { return viewingTurnIndex; },
         set viewingTurnIndex(v) { viewingTurnIndex = v; },
         loadData, migrateData, createFreshData, saveData,
@@ -365,8 +365,10 @@ section('TC-2: Turn Management');
   assertEqual(app.getCurrentTurn().over, 2, 'TC-2.2a: over is 2 after two records');
   app.undo();
   assertEqual(app.getCurrentTurn().over, 1, 'TC-2.2b: undo decrements count to 1');
-  app.undo(); // second undo should do nothing (lastAction was cleared)
-  assertEqual(app.getCurrentTurn().over, 1, 'TC-2.2c: second undo does nothing');
+  app.undo(); // second undo should also work (undo stack)
+  assertEqual(app.getCurrentTurn().over, 0, 'TC-2.2c: second undo decrements to 0');
+  app.undo(); // third undo should do nothing (stack empty)
+  assertEqual(app.getCurrentTurn().over, 0, 'TC-2.2d: third undo does nothing (stack empty)');
 })();
 
 (function TC_2_3() {
