@@ -578,10 +578,14 @@
         let viewingTurnIndex = null; // null = latest turn
 
         function loadData() {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                const parsed = JSON.parse(stored);
-                return migrateData(parsed);
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    return migrateData(parsed);
+                }
+            } catch (e) {
+                console.error('Failed to load data, starting fresh:', e);
             }
             return createFreshData();
         }
@@ -905,6 +909,14 @@
             setTimeout(() => toast.classList.remove('show'), 2000);
         }
 
+        function csvEscape(value) {
+            const str = String(value);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+        }
+
         function exportCSV() {
             const rows = [['Player', 'Date', 'Match', 'Set', 'Turn', 'Over', 'Net', 'Foot', 'Total', 'Success Rate']];
 
@@ -914,8 +926,8 @@
                         const total = turn.over + turn.net + turn.foot;
                         const rate = total > 0 ? Math.round((turn.over / total) * 100) : 0;
                         rows.push([
-                            data.playerName || 'Unknown',
-                            match.date,
+                            csvEscape(data.playerName || 'Unknown'),
+                            csvEscape(match.date),
                             matchIdx + 1,
                             setIdx + 1,
                             turnIdx + 1,
@@ -934,11 +946,14 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `serves-${data.playerName || 'player'}-${new Date().toISOString().split('T')[0]}.csv`;
+            const safeName = (data.playerName || 'player').replace(/[^a-zA-Z0-9_-]/g, '_');
+            a.download = `serves-${safeName}-${new Date().toISOString().split('T')[0]}.csv`;
             document.body.appendChild(a);
             a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
             showToast('CSV downloaded!');
         }
 
