@@ -589,7 +589,7 @@
         <p style="font-size: 11px; color: #666; margin-top: 8px; text-align: center;">
             "Export & New Player" downloads your data first, then resets for a new player.
         </p>
-        <p style="font-size: 11px; color: #444; margin-top: 24px; text-align: center;">
+        <p style="font-size: 11px; color: #888; margin-top: 24px; text-align: center;">
             Serve Tracker v2.2.0
         </p>
     </div>
@@ -619,7 +619,7 @@
         const DATA_VERSION = 2;
 
         let data = loadData();
-        let lastAction = null;
+        let undoStack = [];
         let viewingTurnIndex = null; // null = latest turn
 
         function loadData() {
@@ -693,7 +693,6 @@
             const set = getCurrentSet();
             if (!Number.isFinite(idx) || idx < 0 || idx >= set.turns.length) return;
             viewingTurnIndex = idx === set.turns.length - 1 ? null : idx;
-            lastAction = null;
             updateDisplay();
         }
 
@@ -824,12 +823,12 @@
             if (viewingTurnIndex !== null) return; // Prevent edits to old turns
             const turn = getCurrentTurn();
             const turnIdx = getCurrentTurnIndex();
-            lastAction = {
+            undoStack.push({
                 type,
                 matchIndex: data.matches.length - 1,
                 setIndex: getCurrentMatch().sets.length - 1,
                 turnIndex: turnIdx
-            };
+            });
             turn[type]++;
             if (navigator.vibrate) navigator.vibrate(50);
             saveData();
@@ -837,36 +836,38 @@
         }
 
         function undo() {
-            if (!lastAction) return;
+            if (undoStack.length === 0) return;
+
+            const action = undoStack[undoStack.length - 1];
 
             // Undo "Next Turn" - remove empty turn
-            if (lastAction.type === 'newTurn') {
+            if (action.type === 'newTurn') {
                 if (prevTurn()) {
-                    lastAction = null;
+                    undoStack.pop();
                     showToast('Turn removed');
                 }
                 return;
             }
 
             // Undo serve recording
-            const match = data.matches[lastAction.matchIndex];
+            const match = data.matches[action.matchIndex];
             if (!match) return;
-            const set = match.sets[lastAction.setIndex];
+            const set = match.sets[action.setIndex];
             if (!set) return;
-            const turn = set.turns[lastAction.turnIndex];
+            const turn = set.turns[action.turnIndex];
             if (!turn) return;
-            if (turn[lastAction.type] > 0) {
-                turn[lastAction.type]--;
+            if (turn[action.type] > 0) {
+                turn[action.type]--;
+                undoStack.pop();
                 saveData();
                 updateDisplay();
             }
-            lastAction = null;
         }
 
         function nextTurn() {
             getCurrentSet().turns.push({ over: 0, net: 0, foot: 0 });
             viewingTurnIndex = null; // Go to latest
-            lastAction = { type: 'newTurn' };
+            undoStack.push({ type: 'newTurn' });
             saveData();
             updateDisplay();
         }
@@ -893,7 +894,7 @@
             }
             match.sets.push({ turns: [{ over: 0, net: 0, foot: 0 }] });
             viewingTurnIndex = null;
-            lastAction = null;
+            undoStack = [];
             saveData();
             updateDisplay();
         }
@@ -911,7 +912,7 @@
             }
             match.sets.pop();
             viewingTurnIndex = null;
-            lastAction = null;
+            undoStack = [];
             saveData();
             updateDisplay();
             showToast('Empty set removed');
@@ -925,7 +926,7 @@
                 sets: [{ turns: [{ over: 0, net: 0, foot: 0 }] }]
             });
             viewingTurnIndex = null;
-            lastAction = null;
+            undoStack = [];
             saveData();
             updateDisplay();
         }
@@ -948,7 +949,7 @@
             if (viewingTurnIndex === set.turns.length - 1) {
                 viewingTurnIndex = null;
             }
-            lastAction = null;
+            undoStack = [];
             saveData();
             updateDisplay();
             showToast('Turn deleted');
@@ -959,7 +960,7 @@
             const set = getCurrentSet();
             set.turns = [{ over: 0, net: 0, foot: 0 }];
             viewingTurnIndex = null;
-            lastAction = null;
+            undoStack = [];
             saveData();
             updateDisplay();
             showToast('Set cleared');
@@ -970,7 +971,7 @@
             if (!confirm('Really delete everything? This cannot be undone.')) return;
             data = createFreshData();
             viewingTurnIndex = null;
-            lastAction = null;
+            undoStack = [];
             saveData();
             updateDisplay();
             showToast('All data cleared');
@@ -985,7 +986,7 @@
                 if (confirm('Data exported! Reset for a new player now?')) {
                     data = createFreshData();
                     viewingTurnIndex = null;
-                    lastAction = null;
+                    undoStack = [];
                     saveData();
                     updateDisplay();
                     showToast('Ready for new player!');
