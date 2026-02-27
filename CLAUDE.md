@@ -23,9 +23,9 @@ Tests use a mock DOM environment — no browser needed. All app functions are ex
 
 ## Deployment
 - **Hosting**: Netlify (site ID in `.netlify/state.json`)
+- **Auto-deploy is active**: merging to `main` triggers deploy automatically via GitHub integration
 - **Netlify CLI cannot authenticate from Claude Code remote sessions** — proxy blocks outbound auth
-- **If auto-deploy is configured**: merging to `main` triggers deploy automatically
-- **Manual deploy** (from local machine): `npx netlify-cli deploy --prod --dir=.`
+- **Manual deploy** (from local machine, if needed): `npx netlify-cli deploy --prod --dir=.`
 - **Important**: Bump the SW cache version in `sw.js` with every release so PWA users get updates
 
 ## PR Workflow (from Claude Code remote sessions)
