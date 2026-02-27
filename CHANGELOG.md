@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-02-27
+
+### Added
+- Automated test suite (100 tests) covering all app logic: serves, turns, sets, matches, CSV, statistics, data recovery, edge cases
+- `Number.isFinite()` guard in `goToTurn()` to prevent NaN index crash from DOM tampering
+
+### Fixed
+- `createFreshData()` now uses `Date.now()` for match IDs (was hardcoded `1`, inconsistent with `newMatch()`)
+- Service worker fetch handler now filters to GET requests only (`cache.put` throws TypeError on non-GET)
+- Service worker `cache.put` promise rejection now caught (quota exceeded, etc.)
+
+### Changed
+- Service worker cache bumped to v8
+- Version display updated to v2.2.0
+
 ## [2.1.0] - 2026-02-27
 
 ### Added

@@ -590,7 +590,7 @@
             "Export & New Player" downloads your data first, then resets for a new player.
         </p>
         <p style="font-size: 11px; color: #444; margin-top: 24px; text-align: center;">
-            Serve Tracker v2.1.0
+            Serve Tracker v2.2.0
         </p>
     </div>
 
@@ -658,7 +658,7 @@
                 version: DATA_VERSION,
                 playerName: '',
                 matches: [{
-                    id: 1,
+                    id: Date.now(),
                     date: new Date().toISOString().split('T')[0],
                     sets: [{ turns: [{ over: 0, net: 0, foot: 0 }] }]
                 }]
@@ -691,7 +691,7 @@
 
         function goToTurn(idx) {
             const set = getCurrentSet();
-            if (idx < 0 || idx >= set.turns.length) return;
+            if (!Number.isFinite(idx) || idx < 0 || idx >= set.turns.length) return;
             viewingTurnIndex = idx === set.turns.length - 1 ? null : idx;
             lastAction = null;
             updateDisplay();

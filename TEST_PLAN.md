@@ -2,7 +2,7 @@
 
 **Purpose**: TDD baseline and regression testing for all features
 **Last Updated**: 2026-02-27
-**App Version**: v2.1.0 (turns within sets)
+**App Version**: v2.2.0 (turns within sets)
 
 ---
 
@@ -1478,3 +1478,4 @@ Run key tests on each platform combination:
 |------|--------|
 | 2026-02-02 | Initial comprehensive test plan - all features covered |
 | 2026-02-27 | v2.1.0: Updated TC-1.5, TC-2.6, TC-3.1, TC-4.1; added TC-2.10, TC-3.4-3.7, TC-11.1-11.3, TC-12.1-12.6; updated regression checklist and platform matrix |
+| 2026-02-27 | v2.2.0: Automated test suite (100 tests) added; verified all test cases pass; fixed 4 defects found during testing |

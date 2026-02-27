@@ -1,4 +1,4 @@
-const CACHE_NAME = 'serve-tracker-v7';
+const CACHE_NAME = 'serve-tracker-v8';
 const ASSETS = [
   'index.html',
   'manifest.json',
@@ -27,13 +27,16 @@ self.addEventListener('activate', (event) => {
 
 // Network-first strategy: try network, fall back to cache, update cache on success
 self.addEventListener('fetch', (event) => {
+  // Only cache GET requests (cache.put throws on non-GET)
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
     fetch(event.request).then((response) => {
       // Update cache with fresh response
       const responseClone = response.clone();
       caches.open(CACHE_NAME).then((cache) => {
         cache.put(event.request, responseClone);
-      });
+      }).catch(() => {}); // Ignore cache write failures (quota, etc.)
       return response;
     }).catch(() => {
       // Network failed — serve from cache (offline support)
