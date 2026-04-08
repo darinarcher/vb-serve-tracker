@@ -96,7 +96,7 @@ Simply drag the project folder to [Netlify Drop](https://app.netlify.com/drop).
 - **Next Turn** - Start a new turn within the current set
 - **New Set** - Start a new set within the current match (with confirmation)
 - **New Match** - Start a completely new match (with confirmation)
-- **Undo** - Reverse the last action
+- **Undo** - Reverse recent actions (supports multiple undos within a set)
 - **Return to Latest** - When viewing an old turn, return to the current turn
 
 ### Data Management

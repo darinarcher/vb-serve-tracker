@@ -16,7 +16,7 @@ Run this full checklist after every code change:
 | Serve | NET button records | [ ] |
 | Serve | FOOT button records | [ ] |
 | Turn | Next Turn creates empty turn | [ ] |
-| Turn | Undo reverses last action | [ ] |
+| Turn | Undo reverses actions (multi-undo) | [ ] |
 | Turn | Turn navigation works | [ ] |
 | Set | New Set creates fresh set (with confirmation) | [ ] |
 | Set | Delete Empty Set removes empty set | [ ] |
@@ -180,23 +180,25 @@ Run this full checklist after every code change:
 
 ---
 
-### TC-2.2: Undo Serve Recording
+### TC-2.2: Undo Serve Recording (Multi-Undo)
 
-**Precondition**: Just recorded a serve (e.g., OVER)
+**Precondition**: Just recorded multiple serves
 
 **Steps**:
-1. Record an OVER serve
-2. Tap "Undo" button
+1. Record 7 OVER serves
+2. Tap "Undo" button 7 times
 
 **Expected**:
-- OVER count decrements by 1
-- Stats recalculate
-- lastAction cleared (second Undo does nothing)
+- Each undo decrements OVER count by 1
+- Stats recalculate after each undo
+- After 7 undos, OVER count is back to 0
+- 8th undo has no effect (stack empty)
 
 **Verify**:
-- [ ] Count goes back
-- [ ] Stats update
-- [ ] Second Undo has no effect
+- [ ] Each undo decrements count
+- [ ] Stats update after each undo
+- [ ] All 7 undos work (not just the first)
+- [ ] Undo stack empties after all actions reversed
 
 ---
 
@@ -1384,11 +1386,11 @@ Run key tests on each platform combination:
 1. Scroll to below-fold area (past Quick Actions to "Start Fresh")
 
 **Expected**:
-- "Serve Tracker v2.1.0" text visible at the bottom
+- "Serve Tracker v2.2.0" text visible at the bottom
 
 **Verify**:
 - [ ] Version text present
-- [ ] Color is subtle (#444)
+- [ ] Color is subtle but readable (#888 on dark background)
 
 ---
 
@@ -1478,4 +1480,5 @@ Run key tests on each platform combination:
 |------|--------|
 | 2026-02-02 | Initial comprehensive test plan - all features covered |
 | 2026-02-27 | v2.1.0: Updated TC-1.5, TC-2.6, TC-3.1, TC-4.1; added TC-2.10, TC-3.4-3.7, TC-11.1-11.3, TC-12.1-12.6; updated regression checklist and platform matrix |
-| 2026-02-27 | v2.2.0: Automated test suite (100 tests) added; verified all test cases pass; fixed 4 defects found during testing |
+| 2026-02-27 | v2.2.0: Automated test suite (112 tests) added; verified all test cases pass; fixed 4 defects found during testing |
+| 2026-04-08 | v2.2.0: Updated TC-2.2 for multi-undo behavior; updated TC-12.6 version/color references |

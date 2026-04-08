@@ -27,7 +27,8 @@ This document serves as the source of truth for app functionality. Update this d
 - [ ] Turn navigation (prev/next) allows reviewing past turns
 - [ ] Visual indicator when viewing an older turn vs. current turn
 - [ ] Orange "Viewing Turn N" banner with "Return to Latest" button when viewing old turns
-- [ ] Undo last action (serve recording or new turn creation)
+- [ ] Multi-level undo: reverse multiple actions (serve recordings and turn creations) via undo stack
+- [ ] Undo stack cleared on structural operations (New Set, New Match, Reset)
 - [ ] Delete empty turns
 
 **Status:** Implemented
@@ -201,6 +202,71 @@ This document serves as the source of truth for app functionality. Update this d
 
 ---
 
+## Roadmap
+
+### RD-001: Multiple Player Tracking
+**Description:** Track serve stats for 6+ players in rotation. A player selector or multi-player mode would significantly increase coaching utility.
+
+**Status:** Roadmap
+
+---
+
+### RD-002: Serve Type Expansion
+**Description:** Add categories beyond OVER/NET/FOOT — e.g., ace, out (long/wide), let — for competitive team analysis.
+
+**Status:** Roadmap
+
+---
+
+### RD-003: Data Visualization
+**Description:** Simple bar charts or trend lines showing success rate over turns/sets/matches. Achievable with pure CSS or canvas — no library needed.
+
+**Status:** Roadmap
+
+---
+
+### RD-004: Cloud Sync / Sharing
+**Description:** localStorage is device-locked. Options range from JSON import/export (simple) to Firebase sync (medium) to URL-encoded sharing (for small datasets).
+
+**Status:** Roadmap
+
+---
+
+### RD-005: Deeper Undo Stack Limit
+**Description:** Currently the undo stack is unbounded within a set. Consider a configurable depth limit (e.g., 50) to bound memory usage for very long sets.
+
+**Status:** Roadmap
+
+---
+
+### RD-006: Notes per Turn/Set
+**Description:** Annotations like "serving from zone 1" or "switched to float serve" add context when reviewing history later.
+
+**Status:** Roadmap
+
+---
+
+### RD-007: Time-Based Analytics
+**Description:** Timestamps on serves/turns would enable insights like "performance drops after turn 5."
+
+**Status:** Roadmap
+
+---
+
+### RD-008: Landscape / Tablet Support
+**Description:** Add media queries for wider viewports. A max-width container or responsive column layout would improve the tablet experience.
+
+**Status:** Roadmap
+
+---
+
+### RD-009: Swipe Gesture Navigation
+**Description:** Touch-based left/right swipe between turns would feel natural and be faster than the below-fold navigation buttons.
+
+**Status:** Roadmap
+
+---
+
 ## Data Model
 
 ### Version 2 Schema
@@ -237,3 +303,5 @@ This document serves as the source of truth for app functionality. Update this d
 |------|--------|--------|
 | 2026-02-02 | Initial requirements document | vbtracker/polecats/obsidian |
 | 2026-02-27 | v2.1.0: Added empty set removal, old-turn safety, haptic feedback, confirmations, CSV escaping, error recovery, network-first SW, proper icons | claude |
+| 2026-02-27 | v2.2.0: Multi-level undo stack, version text visibility fix, test suite (112 tests), 4 defect fixes | claude |
+| 2026-04-08 | Added Roadmap section with future feature ideas; updated FR-002 for multi-undo | claude |

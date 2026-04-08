@@ -16,9 +16,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `createFreshData()` now uses `Date.now()` for match IDs (was hardcoded `1`, inconsistent with `newMatch()`)
 - Service worker fetch handler now filters to GET requests only (`cache.put` throws TypeError on non-GET)
 - Service worker `cache.put` promise rejection now caught (quota exceeded, etc.)
+- Undo now supports multi-level: replaced single `lastAction` variable with `undoStack` array (was only undoing once)
+- Version text color changed from `#444` to `#888` for visibility on dark background
 
 ### Changed
-- Service worker cache bumped to v8
+- Service worker cache bumped to v9
 - Version display updated to v2.2.0
 
 ## [2.1.0] - 2026-02-27
