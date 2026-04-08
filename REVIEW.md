@@ -12,59 +12,24 @@
 
 ---
 
-## Bugs & Issues
+## Bugs & Issues (All Resolved)
 
-### 1. Service worker caching strategy is contradictory (`sw.js:27-39`)
+> All bugs below were fixed in v2.1.0–v2.2.0.
 
-The implementation is **cache-first with network fallback**:
+### 1. ~~Service worker caching strategy~~ — Fixed in v2.1.0
+Switched to network-first strategy.
 
-```js
-// This tries cache FIRST, then falls back to network
-caches.match(event.request).then((cached) => {
-    return cached || fetch(event.request)...
-});
-```
+### 2. ~~No JSON parse error handling~~ — Fixed in v2.1.0
+`loadData()` wrapped in try/catch with fallback to `createFreshData()`.
 
-This means once a version is cached, users will **never get updates** unless the service worker file itself changes (triggering a new install). Deploying a new `index.html` without bumping the service worker cache version will silently serve stale content.
+### 3. ~~Match ID collision potential~~ — Fixed in v2.1.0
+Now uses `Date.now()` for match IDs.
 
-**Fix:** Either switch to network-first (try fetch, fall back to cache) or ensure the service worker cache name is always bumped on deploy.
+### 4. ~~CSV injection vulnerability~~ — Fixed in v2.1.0
+CSV fields properly escaped with quotes and double-quote escaping.
 
-### 2. No JSON parse error handling (`index.html:582-583`)
-
-```js
-const parsed = JSON.parse(stored);
-```
-
-If localStorage gets corrupted (which happens on mobile under storage pressure), this will throw and the app will fail to initialize with no recovery path.
-
-**Fix:** Wrap in try/catch, fall back to `createFreshData()`.
-
-### 3. Match ID collision potential (`index.html:826`)
-
-```js
-id: data.matches.length + 1
-```
-
-If matches are ever deleted, IDs will collide. Not a functional bug now but a latent issue if the data model evolves.
-
-**Fix:** Use `Date.now()` or a counter stored in the data object.
-
-### 4. CSV injection vulnerability (`index.html:908-932`)
-
-Player names are written directly to CSV without escaping. A name with commas or quotes corrupts the CSV. A name like `=CMD()` could trigger formula injection in Excel.
-
-**Fix:** Wrap fields in quotes and escape internal quotes: `"${value.replace(/"/g, '""')}"`.
-
-### 5. Netlify config has hardcoded local path (`netlify.toml:10-11`)
-
-```toml
-publish = "/Users/darinarcher/gt-demo/volleyball-tracker"
-base = "/Users/darinarcher/gt-demo/volleyball-tracker"
-```
-
-This only works on one developer's machine.
-
-**Fix:** Use a relative path like `"."` or `"/"`.
+### 5. ~~Netlify config hardcoded path~~ — Fixed in v2.1.0
+Replaced with relative path `"."`.
 
 ---
 
@@ -90,61 +55,51 @@ The pattern `turn.over === 0 && turn.net === 0 && turn.foot === 0` appears at li
 
 ## UX Improvement Ideas
 
-1. **Haptic feedback on serve recording.** `navigator.vibrate(50)` on each tap provides tactile confirmation when you can't look at the screen.
+> Items 1–4 implemented in v2.1.0. Items 5–6 moved to REQUIREMENTS.md Roadmap (RD-008, RD-009).
 
-2. **Accidental tap prevention.** A short debounce (100-200ms) or a visual flash would prevent double-taps during fast-paced games.
-
-3. **Confirmation before "New Set" and "New Match."** These are irreversible organizational changes. A `confirm()` dialog would prevent accidental presses, especially since they sit right next to "Next Turn" and "Undo."
-
-4. **Better "viewing old turn" UX.** When viewing an old turn, serve buttons still modify it. Consider disabling serve buttons when viewing old turns, or adding a prominent "Return to latest" banner.
-
-5. **Landscape support.** No media queries exist for wider viewports. A max-width container or responsive column layout would improve the tablet experience.
-
-6. **Swipe gestures for turn navigation.** Touch-based left/right swipe between turns would feel natural and be faster than the below-fold navigation buttons.
+1. ~~**Haptic feedback on serve recording.**~~ — Implemented in v2.1.0
+2. **Accidental tap prevention.** A short debounce (100-200ms) would prevent double-taps. *Low priority — not yet implemented.*
+3. ~~**Confirmation before "New Set" and "New Match."**~~ — Implemented in v2.1.0
+4. ~~**Better "viewing old turn" UX.**~~ — Implemented in v2.1.0 (orange banner + disabled buttons)
+5. **Landscape support.** → Moved to REQUIREMENTS.md as RD-008
+6. **Swipe gestures for turn navigation.** → Moved to REQUIREMENTS.md as RD-009
 
 ---
 
 ## Feature Ideas
 
-1. **Multiple player tracking.** A coach often wants to track 6+ players in rotation. A player selector or multi-player mode would significantly increase utility.
+> All items below have been moved to REQUIREMENTS.md Roadmap section. See RD-001 through RD-009 for current status.
 
-2. **Serve type expansion.** Adding categories like ace, out (long/wide), or let would benefit competitive teams.
-
-3. **Data visualization.** Simple bar charts or trend lines showing success rate over turns/sets/matches. Achievable with pure CSS or canvas — no library needed.
-
-4. **Cloud sync / sharing.** localStorage is device-locked. Options range from JSON import/export (simple) to Firebase sync (medium) to URL-encoded sharing (for small datasets).
-
-5. **Deeper undo stack.** Currently only the last action is undoable. A 5-10 deep stack would be more forgiving during hectic games.
-
-6. **Notes per turn/set.** Annotations like "serving from zone 1" or "switched to float serve" add context when reviewing history.
-
-7. **Time-based analytics.** Timestamps on serves/turns would enable insights like "performance drops after turn 5."
+1. **Multiple player tracking.** → RD-001
+2. **Serve type expansion.** → RD-002
+3. **Data visualization.** → RD-003
+4. **Cloud sync / sharing.** → RD-004
+5. ~~**Deeper undo stack.**~~ — Implemented in v2.2.0 (full undo stack, not single-action). Stack depth limit → RD-005.
+6. **Notes per turn/set.** → RD-006
+7. **Time-based analytics.** → RD-007
 
 ---
 
 ## Architecture Suggestions
 
-1. **Consider IndexedDB.** localStorage caps at ~5-10MB per origin. A full season of multi-player data could hit this. IndexedDB has virtually no limit.
-
-2. **Add error boundaries.** Wrap initialization in try/catch so corrupted localStorage doesn't white-screen the app.
-
-3. **Use proper app icons.** The inline SVG with emoji renders inconsistently across platforms. Real PNG icons (192x192, 512x512) would look professional everywhere.
-
-4. **Add `<noscript>` fallback.** If JS fails, users see an empty shell. A message would improve the experience.
-
-5. **Version display.** Show the app version in the UI so users can confirm they're running the latest — important given the service worker caching issue.
+1. **Consider IndexedDB.** localStorage caps at ~5-10MB per origin. A full season of multi-player data could hit this. IndexedDB has virtually no limit. *Not yet addressed.*
+2. ~~**Add error boundaries.**~~ — Implemented in v2.1.0 (try/catch in `loadData()`)
+3. ~~**Use proper app icons.**~~ — Implemented in v2.1.0 (standalone SVG icon)
+4. ~~**Add `<noscript>` fallback.**~~ — Implemented in v2.1.0
+5. ~~**Version display.**~~ — Implemented in v2.1.0, visibility fixed in v2.2.0
 
 ---
 
-## Priority Summary
+## Priority Summary (Updated)
 
-| Priority | Item |
-|----------|------|
-| **High** | Fix service worker caching strategy (users won't get updates) |
-| **High** | Add JSON parse error handling in `loadData()` |
-| **High** | Fix CSV escaping (injection risk) |
-| **Medium** | Fix Netlify config hardcoded path |
-| **Medium** | Add confirmation dialogs to New Set / New Match |
-| **Medium** | Clarify UX when viewing old turns |
-| **Low** | Haptic feedback, debouncing, proper app icons |
-| **Feature** | Multi-player tracking, data visualization, cloud sync |
+| Priority | Item | Status |
+|----------|------|--------|
+| ~~**High**~~ | ~~Fix service worker caching strategy~~ | Fixed v2.1.0 |
+| ~~**High**~~ | ~~Add JSON parse error handling~~ | Fixed v2.1.0 |
+| ~~**High**~~ | ~~Fix CSV escaping~~ | Fixed v2.1.0 |
+| ~~**Medium**~~ | ~~Fix Netlify config hardcoded path~~ | Fixed v2.1.0 |
+| ~~**Medium**~~ | ~~Add confirmation dialogs~~ | Fixed v2.1.0 |
+| ~~**Medium**~~ | ~~Clarify UX when viewing old turns~~ | Fixed v2.1.0 |
+| ~~**Low**~~ | ~~Haptic feedback, proper app icons~~ | Fixed v2.1.0 |
+| **Low** | Tap debouncing | Not yet implemented |
+| **Feature** | Multi-player, visualization, cloud sync, etc. | See REQUIREMENTS.md Roadmap |
