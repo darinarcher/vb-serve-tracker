@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [3.0.0] - Unreleased
+
+### Added
+- RD-002: Split OVER into **OVER/IN** (in bounds, includes aces and legal net-touch serves) and **OVER/OUT** (cleared net but out long/wide)
+- 2×2 serve button layout: OVER/IN | OVER/OUT on top row, NET | FOOT on bottom row
+- Data model v3 with `overIn` and `overOut` fields; v2 `over` counts migrate to `overIn`
+- CSV columns: OverIn, OverOut, Net, Foot, Total (sum verification), In-Play Rate
+- Playwright UAT suite (`npm run test:uat`) for RD-002 acceptance
+- Unit tests for overOut recording, v2→v3 migration, and CSV total verification
+- Reproducible Playwright tooling with a committed dependency lockfile
+- Automated offline PWA shell regression coverage
+- ESLint flat configuration covering the inline app script, service worker, test harness, and Playwright tests
+- Table-driven unit coverage for totals, rate rounding, aggregation, and unknown serve-type protection
+- GitHub Actions quality gate for lint, unit tests, and Playwright UAT
+- Legacy workflow coverage for turns, sets, matches, names, history, reset, recovery, persistence, and mobile scrolling
+- Primary iPhone-Safari/WebKit project and two reviewed visual regression baselines
+- Test-plan traceability maps separating deterministic CI coverage from actual-iPhone checks
+- Unit coverage for unnamed-player CSV fallback and the noscript recovery message
+
+### Changed
+- In-play rate (OVER/IN ÷ total serves) replaces legacy over/total success rate
+- History and set summary show IN/OUT/NET/FOOT breakdown per turn
+- v1/v2 migrations are persisted to localStorage immediately
+- Unknown serve types are ignored instead of corrupting turn data and undo history
+- Service worker cache bumped to v10
+- Version display updated to v3.0.0
+- iPhone Safari is documented as the sole primary client; Android remains an optional compatibility pass
+
 ## [2.2.0] - 2026-02-27
 
 ### Added

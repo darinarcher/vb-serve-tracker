@@ -1,21 +1,22 @@
 # VB Serve Tracker - Mobile Scroll Test Plan
 
 **Purpose**: Regression testing for page scrolling on mobile devices
-**Last Updated**: 2026-02-02
-**Platforms**: iPhone Safari, iPhone PWA, Android Chrome, Android PWA
+**Last Updated**: 2026-08-17
+**Primary Platforms**: iPhone Safari and iPhone PWA
+**Compatibility Platforms**: Android Chrome and Android PWA (manual, non-blocking)
 
 ---
 
 ## Quick Regression Checklist
 
-Run this after every code change on BOTH platforms:
+Run `npm run check` after every code change. Before release, run this physical-gesture checklist on iPhone Safari and iPhone PWA. Android is an optional compatibility pass:
 
 | # | Test | Expected | iOS | Android |
 |---|------|----------|-----|---------|
 | 1 | Load page, swipe up on main content | Page scrolls to reveal "below fold" section | [ ] | [ ] |
 | 2 | Swipe down from below fold | Page scrolls back up | [ ] | [ ] |
 | 3 | Open History modal (clipboard icon), swipe up | Modal content scrolls | [ ] | [ ] |
-| 4 | Tap OVER button, then scroll | Scroll still works after button tap | [ ] | [ ] |
+| 4 | Tap each serve button, then scroll | Scroll still works after button taps | [ ] | [ ] |
 | 5 | Enter player name, dismiss keyboard, scroll | Scroll works after keyboard dismissal | [ ] | [ ] |
 | 6 | Add to Home Screen, launch as PWA, scroll | Scroll works in standalone mode | [ ] | [ ] |
 
@@ -66,9 +67,9 @@ Run this after every code change on BOTH platforms:
 **Precondition**: Page loaded
 
 **Steps**:
-1. Tap the green OVER button
+1. Tap each serve button: OVER/IN, OVER/OUT, NET, and FOOT
 2. Immediately try to scroll the page upward
-3. Repeat with NET and FOOT buttons
+3. Repeat after each serve type
 
 **Expected**:
 - Buttons register taps normally
@@ -245,6 +246,25 @@ Run this after every code change on BOTH platforms:
 
 ---
 
+## Automation Coverage Map
+
+The `iphone-safari` Playwright project uses WebKit with an iPhone 13 profile. Programmatic scroll and viewport assertions are deterministic regression coverage; they do not simulate the physics of a finger, the iOS keyboard, safe areas, or installed-PWA chrome.
+
+| Case | Automated coverage | Actual-device coverage |
+|------|--------------------|------------------------|
+| TC-01 | `mobile-scroll.spec.js`: page has vertical range and reaches below-fold content | Verify normal finger swipe and momentum |
+| TC-02 | `mobile-scroll.spec.js`: all serve interactions leave page scrolling usable | Verify immediate swipe after physical taps |
+| TC-03 | `mobile-scroll.spec.js`: input focus/blur leaves scrolling usable | Verify iOS keyboard appearance/dismissal and viewport offset |
+| TC-04 | `mobile-scroll.spec.js`: populated modal has and uses independent scroll range | Verify finger momentum and return to main page |
+| TC-05 | `mobile-scroll.spec.js`: long turn list has and uses its own scroll range | Verify scroll chaining by touch |
+| TC-06 | Offline shell is automated in `pwa-offline.spec.js` on Chromium | Required on installed iPhone PWA: all scroll cases plus safe areas |
+| TC-07 | `mobile-scroll.spec.js`: landscape-sized WebKit viewport reflows with no horizontal overflow | Required physical portrait→landscape→portrait rotation |
+| TC-08 | Not meaningfully emulated | Required iOS top/bottom rubber-band and momentum recovery |
+| TC-09 | Not automated; Android-only | Optional Android compatibility check |
+| TC-10 | Main/history horizontal overflow is covered under TC-10.7 in `mobile-scroll.spec.js`; edge navigation is not emulated | Optional Android gesture-navigation check |
+
+The two iPhone visual baselines in `visual-regression.spec.js` protect the primary tracking screen and populated history modal at 375×667. Update them only with `npm run test:visual:update` after inspecting the intended UI change.
+
 ## Known Scroll Killers by Platform
 
 ### Both Platforms
@@ -373,3 +393,4 @@ document.addEventListener('scroll', () => console.log('scroll event'));
 | Date | Change |
 |------|--------|
 | 2026-02-02 | Initial test plan - iOS Safari + Android Chrome coverage |
+| 2026-08-17 | Added iPhone-Safari/WebKit automation map, visual baselines, and explicit actual-device gesture boundary |
