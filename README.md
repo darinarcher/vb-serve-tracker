@@ -6,7 +6,7 @@ A mobile-first Progressive Web App for tracking volleyball serve statistics duri
 
 ## Features
 
-- **Real-time serve tracking** - Tap to record OVER/IN, OVER/OUT, NET, or FOOT with haptic feedback
+- **Real-time serve tracking** - Tap to record OVER/IN, OVER/OUT, NET, or FOOT with immediate visual feedback and best-effort vibration on supported browsers
 - **Turn-based organization** - Track serves by turn within sets and matches
 - **Live statistics** - See the in-play rate update instantly for both current turn and set totals
 - **Match history** - Review past matches with detailed per-turn breakdowns
@@ -139,7 +139,12 @@ npm run test:visual:update
 npm run check
 ```
 
-GitHub Actions runs `npm run check` automatically for pull requests and pushes to `main`. The deterministic suite covers 147 unit assertions, 24 emulated iPhone-Safari tests (including two visual snapshots), and one Chromium offline-PWA test. Physical iPhone checks remain required for haptics, safe areas, keyboard/gesture physics, installation, and offline installed-PWA launch; see `TEST_PLAN.md`.
+GitHub Actions runs `npm run check` automatically for pull requests and pushes to `main`. The deterministic suite covers 148 unit assertions, 24 emulated iPhone-Safari tests (including two visual snapshots), and one Chromium offline-PWA test. Physical iPhone checks are risk-based and limited to behavior emulation cannot reproduce; see `TEST_PLAN.md`.
+
+### iPhone Platform Notes
+
+- iPhone Safari/WebKit does not expose the Vibration API, so serve taps cannot provide dependable haptic feedback in the PWA. The guarded vibration enhancement remains available to supporting browsers.
+- v3.0.0 passed physical iPhone Safari and installed-PWA UAT on model `MG7P4LL/A` with iOS 26.6. Landscape safe-area ergonomics around the Dynamic Island and an app-icon redesign remain roadmap work.
 
 ## Contributing
 

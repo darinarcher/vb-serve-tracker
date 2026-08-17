@@ -7,7 +7,7 @@ Single-page PWA for tracking volleyball serve statistics. All app logic lives in
 - `index.html` — Full app (HTML + CSS + JS, all inline)
 - `sw.js` — Service worker for PWA caching (bump cache version on every deploy)
 - `manifest.json` — PWA manifest
-- `test.js` — 147 automated unit assertions (Node.js)
+- `test.js` — 148 automated unit assertions (Node.js)
 - `e2e/` — Playwright acceptance tests for mobile UI and browser behavior
 - `eslint.config.js` — ESLint flat configuration for app, unit, service-worker, and Playwright code
 - `.github/workflows/ci.yml` — PR and main-branch quality gate

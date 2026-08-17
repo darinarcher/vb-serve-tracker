@@ -29,7 +29,7 @@ Run `npm run check` after every code change. Use this checklist for the final re
 | History | CSV exports correctly | [ ] |
 | Old Turn | Banner shown, buttons disabled | [ ] |
 | Old Turn | Return to Latest works | [ ] |
-| Haptic | Vibration on serve tap | [ ] |
+| Haptic | Serve records without errors when vibration is unavailable | [ ] |
 | PWA | App works offline | [ ] |
 | Data | Data persists across sessions | [ ] |
 | Data | Corrupted localStorage recovers | [ ] |
@@ -1544,7 +1544,7 @@ Run key tests on each platform combination:
 | Persistence | TC-8.1–8.5 | Save, migrations, reset/cancel | Reload persistence, v2→v3 persistence, reset/cancel, corrupted storage | Force-close/reopen installed PWA |
 | Statistics | TC-9.1–9.8 | Totals, denominator, zero, rounding boundaries, aggregation immutability | Turn/set rates and RD-002 3/6 case | None |
 | UI / responsive | TC-10.1–10.8 | Static version/fallback checks | iPhone viewport, landscape reflow, scrolling, no overflow, touch-target geometry, toast, two snapshots | TC-10.1 animation feel and TC-10.2 physical notch/safe areas |
-| Haptic / safety | TC-11.1–11.3 | Vibration API call and confirmation guards | Set/match confirmation accept/cancel | TC-11.1 physical vibration on iPhone |
+| Haptic / safety | TC-11.1–11.3 | Supported-browser vibration call, unsupported-browser fallback, and confirmation guards | Set/match confirmation accept/cancel | Vibration is not available on iPhone Safari/WebKit |
 | Recovery / CSV safety | TC-12.1–12.6 | Recovery, CSV escaping/sanitization, noscript, version | Corrupted-storage recovery in WebKit | JavaScript-disabled display, if desired |
 | Edge cases | EC-1–EC-5 | EC-1, EC-3, EC-4 | Long history/turn lists exercise larger datasets | EC-2 long-name layout and EC-5 browser navigation |
 
@@ -1554,15 +1554,22 @@ Run key tests on each platform combination:
 - `chromium-pwa` owns only the deterministic offline service-worker test. Playwright WebKit cannot reliably reload a page after its context is forced offline; actual iPhone Safari/PWA remains the release smoke test for that behavior.
 - Visual baselines live beside `e2e/visual-regression.spec.js`. Run `npm run test:visual:update` only for an intentional UI change, inspect both images, then run `npm run check`.
 
-### Required Real-iPhone Release Smoke Test
+### Risk-Based Real-iPhone Release Smoke Test
 
-Before shipping a UI, touch, viewport, storage, or service-worker change, verify in iPhone Safari (and the installed PWA when applicable): physical rapid taps, keyboard dismissal, portrait/landscape rotation, overscroll recovery, safe areas, haptic feedback, CSV download/share, offline launch, and force-close/reopen persistence. Android cases remain compatibility checks and are not release blockers while iPhone Safari is the sole primary client.
+`npm run check` is the default regression gate. Repeat only the actual-device checks connected to the changed risk:
+
+- UI, touch, or viewport changes: physical rapid taps, keyboard dismissal, scrolling, rotation, and safe areas.
+- Storage or service-worker changes: Home Screen launch, offline launch/recording, force-close persistence, and online recovery.
+- Export changes: download, open, columns, and row arithmetic.
+- Vibration changes: verify graceful fallback on iPhone Safari; test physical vibration only on a browser that implements the Vibration API.
+
+Do not manually repeat deterministic history, CSV, math, migration, or workflow cases for unrelated enhancements; Playwright and unit tests own those regressions. Android remains an optional compatibility pass while iPhone Safari is the sole primary client.
 
 ## Test Results Log
 
 | Date | Tester | Platform | Version | Pass/Fail | Notes |
 |------|--------|----------|---------|-----------|-------|
-| | | | | | |
+| 2026-08-17 | Darin Archer | iPhone `MG7P4LL/A`, Safari + installed PWA, iOS 26.6 | v3.0.0 PR #5 preview | Pass with accepted limitations | Core tracking, math, history, CSV, rotation, installation, force-close persistence, offline use, and online recovery passed. WebKit vibration unavailable as expected. Landscape Dynamic Island ergonomics and icon redesign tracked in RD-008/RD-012. |
 | | | | | | |
 | | | | | | |
 
@@ -1574,12 +1581,12 @@ Automated via `e2e/rd002-serve-types.spec.js` (Playwright) and unit tests TC-1.1
 
 | Test | Description | Manual | Playwright |
 |------|-------------|--------|------------|
-| RD-002.1 | 2×2 equal-row layout: OVER/IN, OVER/OUT, NET, FOOT; touch targets ≥44px | [ ] | [x] |
-| RD-002.2 | Each button increments its counter | [ ] | [x] |
-| RD-002.3 | In-play rate = OVER/IN ÷ total (OVER/OUT not counted in numerator) | [ ] | [x] |
-| RD-002.4 | v2 data migrates and persists: legacy `over` → `overIn` | [ ] | [x] |
-| RD-002.5 | History modal shows IN/OUT/NET/FOOT per turn without horizontal overflow | [ ] | [x] |
-| RD-002.6 | CSV Total column = OverIn + OverOut + Net + Foot | [ ] | [x] |
+| RD-002.1 | 2×2 equal-row layout: OVER/IN, OVER/OUT, NET, FOOT; touch targets ≥44px | [x] | [x] |
+| RD-002.2 | Each button increments its counter | [x] | [x] |
+| RD-002.3 | In-play rate = OVER/IN ÷ total (OVER/OUT not counted in numerator) | [x] | [x] |
+| RD-002.4 | v2 data migrates and persists: legacy `over` → `overIn` | [x] | [x] |
+| RD-002.5 | History modal shows IN/OUT/NET/FOOT per turn without horizontal overflow | [x] | [x] |
+| RD-002.6 | CSV Total column = OverIn + OverOut + Net + Foot | [x] | [x] |
 
 ---
 
@@ -1597,4 +1604,4 @@ Automated via `e2e/rd002-serve-types.spec.js` (Playwright) and unit tests TC-1.1
 | 2026-02-27 | v2.1.0: Updated TC-1.5, TC-2.6, TC-3.1, TC-4.1; added TC-2.10, TC-3.4-3.7, TC-11.1-11.3, TC-12.1-12.6; updated regression checklist and platform matrix |
 | 2026-02-27 | v2.2.0: Automated test suite (112 tests) added; verified all test cases pass; fixed 4 defects found during testing |
 | 2026-04-08 | v2.2.0: Updated TC-2.2 for multi-undo behavior; updated TC-12.6 version/color references |
-| 2026-08-17 | v3.0.0: Updated regression cases for four serve outcomes; added 147 unit assertions, 24 iPhone-Safari Playwright tests (including two visual baselines), one Chromium offline PWA test, ESLint, traceability, and CI |
+| 2026-08-17 | v3.0.0: Updated regression cases for four serve outcomes; added 148 unit assertions, 24 iPhone-Safari Playwright tests (including two visual baselines), one Chromium offline PWA test, ESLint, traceability, CI, and physical iPhone UAT evidence |

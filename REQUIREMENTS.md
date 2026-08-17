@@ -12,7 +12,7 @@ This document serves as the source of truth for app functionality. Update this d
 - [ ] Visual distinction between serve types (green=OVER/IN and OVER/OUT, red=NET, yellow=FOOT)
 - [ ] Display count for current turn prominently
 - [ ] Display cumulative set totals
-- [ ] Haptic feedback (vibration) on serve recording for tactile confirmation
+- [ ] Best-effort vibration on browsers that implement the Vibration API; unavailable on iPhone Safari/WebKit
 - [ ] Serve buttons disabled when viewing an old turn to prevent accidental edits
 
 **Status:** Implemented
@@ -138,7 +138,7 @@ This document serves as the source of truth for app functionality. Update this d
 **Acceptance Criteria:**
 - [ ] iOS Safari: apple-mobile-web-app-capable meta tag
 - [ ] iOS Safari: black-translucent status bar style
-- [ ] Safe area insets respected (notch handling)
+- [ ] Portrait safe-area insets respected; landscape Dynamic Island refinement remains in RD-008
 - [ ] Touch-friendly interactions (no tap highlight)
 - [ ] Works with webkit-specific scrolling
 
@@ -169,7 +169,7 @@ This document serves as the source of truth for app functionality. Update this d
 - [ ] Minimum touch target size of 44x44px for navigation buttons
 - [ ] Adequate spacing between buttons to prevent misclicks
 - [ ] Visual feedback on button press (scale/opacity transitions)
-- [ ] Haptic feedback (vibration) on serve recording
+- [ ] Best-effort vibration on supported browsers; primary iPhone Safari has no web vibration API
 - [ ] Confirmation dialogs on irreversible actions (New Set, New Match)
 
 **Status:** Implemented
@@ -254,7 +254,7 @@ This document serves as the source of truth for app functionality. Update this d
 ---
 
 ### RD-008: Landscape / Tablet Support
-**Description:** Add media queries for wider viewports. A max-width container or responsive column layout would improve the tablet experience.
+**Description:** Add media queries for wider viewports. A max-width container or responsive column layout would improve the tablet experience. Physical iPhone UAT on iOS 26.6 found that the landscape Dynamic Island makes left-side content challenging to see; add horizontal safe-area insets and validate both landscape orientations.
 
 **Status:** Roadmap
 
@@ -269,6 +269,20 @@ This document serves as the source of truth for app functionality. Update this d
 
 ### RD-010: Empty Turns Removed Automatically
 **Description:** New Set and New Match carry forward the place-holder starting point for a turn that might not have happened. For example, server serves and it's out. Next team serves and back and forth, but server being tracked doesn't serve again.
+
+**Status:** Roadmap
+
+---
+
+### RD-011: Dependable iPhone Haptic Feedback
+**Description:** Courtside users want tactile confirmation for every serve tap, but iPhone Safari/WebKit does not expose the Vibration API. Revisit when WebKit adds an official capability, or evaluate a native wrapper with a supported haptics API. Do not depend on private or accessibility-control hacks for a scoring workflow.
+
+**Status:** Roadmap — blocked for a pure iPhone Safari PWA pending an official web API; native packaging would be a separate product decision
+
+---
+
+### RD-012: App Icon and Favicon Redesign
+**Description:** Redesign the installed-PWA icon and browser favicon for clearer identification on the iPhone Home Screen while retaining maskable and cross-platform variants.
 
 **Status:** Roadmap
 

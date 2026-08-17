@@ -241,7 +241,7 @@ Before submitting a PR, run through the relevant sections of `TEST_PLAN.md`:
    - Test offline launch on the installed iPhone PWA
 
 5. **Before a release:**
-   - Complete the real-iPhone smoke test in `TEST_PLAN.md`
+   - Complete only the applicable risk-based real-iPhone checks in `TEST_PLAN.md`
    - Treat iPhone Safari as the primary product browser
    - Keep Android testing as a non-blocking compatibility pass unless product scope changes
 

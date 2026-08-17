@@ -265,6 +265,8 @@ The `iphone-safari` Playwright project uses WebKit with an iPhone 13 profile. Pr
 
 The two iPhone visual baselines in `visual-regression.spec.js` protect the primary tracking screen and populated history modal at 375×667. Update them only with `npm run test:visual:update` after inspecting the intended UI change.
 
+Physical UAT on iOS 26.6 passed rotation and safe-area checks for v3.0.0, with an accepted limitation: the landscape Dynamic Island makes left-side content challenging to see. Horizontal safe-area refinement is tracked in RD-008.
+
 ## Known Scroll Killers by Platform
 
 ### Both Platforms

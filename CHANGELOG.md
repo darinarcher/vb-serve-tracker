@@ -24,6 +24,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Primary iPhone-Safari/WebKit project and two reviewed visual regression baselines
 - Test-plan traceability maps separating deterministic CI coverage from actual-iPhone checks
 - Unit coverage for unnamed-player CSV fallback and the noscript recovery message
+- Physical iPhone Safari and installed-PWA UAT evidence for tracking, history, CSV, rotation, persistence, offline use, and recovery
+- Unsupported-vibration fallback coverage for iPhone Safari/WebKit
 
 ### Changed
 - In-play rate (OVER/IN ÷ total serves) replaces legacy over/total success rate
@@ -33,6 +35,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Service worker cache bumped to v10
 - Version display updated to v3.0.0
 - iPhone Safari is documented as the sole primary client; Android remains an optional compatibility pass
+- Real-iPhone UAT is risk-based; deterministic workflow, history, CSV, math, and migration regressions remain owned by automation
+- Haptic feedback is documented as best-effort on supporting browsers because iPhone Safari/WebKit has no web vibration API
 
 ## [2.2.0] - 2026-02-27
 

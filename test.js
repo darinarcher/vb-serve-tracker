@@ -902,6 +902,14 @@ section('TC-11: Safety');
   assertEqual(env.vibrateCalls[0], 50, 'TC-11.1b: vibrate called with 50ms');
 })();
 
+(function TC_11_1_unsupported() {
+  const env = createMockEnv();
+  delete env.navigator.vibrate;
+  const { app } = initApp(env);
+  app.recordServe('overIn');
+  assertEqual(app.getCurrentTurn().overIn, 1, 'TC-11.1c: serve records when vibration API is unavailable');
+})();
+
 (function TC_11_2() {
   const { app, env } = freshApp();
   env.setConfirmReturn(true);
