@@ -8,11 +8,9 @@ This document serves as the source of truth for app functionality. Update this d
 **Description:** Track four serve outcomes: OVER/IN (clears the net and lands in bounds, including aces and legal net-touch serves), OVER/OUT (clears the net but lands out long/wide), NET (fails to clear the net), and FOOT (foot fault).
 
 **Acceptance Criteria:**
-- [ ] Large, touch-friendly buttons for each serve type in a 2×2 layout
-- [ ] Visual distinction between serve types (green=OVER/IN and OVER/OUT, red=NET, yellow=FOOT)
+- [ ] Record OVER/IN, OVER/OUT, NET, and FOOT as distinct serve outcomes
 - [ ] Display count for current turn prominently
 - [ ] Display cumulative set totals
-- [ ] Best-effort vibration on browsers that implement the Vibration API; unavailable on iPhone Safari/WebKit
 - [ ] Serve buttons disabled when viewing an old turn to prevent accidental edits
 
 **Status:** Implemented
@@ -162,12 +160,13 @@ This document serves as the source of truth for app functionality. Update this d
 ---
 
 ### NFR-002: Touch-Friendly Large Buttons
-**Description:** All interactive elements sized for comfortable touch interaction.
+**Description:** Primary serve controls and other interactive elements are sized and arranged for reliable courtside touch input without mis-taps.
 
 **Acceptance Criteria:**
-- [ ] Main serve buttons are large and prominent
+- [ ] Four large, equal-sized serve buttons use a 2×2 layout: OVER/IN and OVER/OUT on the top row, NET and FOOT on the bottom row
+- [ ] Serve types are visually distinct (green=OVER/IN and OVER/OUT, red=NET, yellow=FOOT)
 - [ ] Minimum touch target size of 44x44px for navigation buttons
-- [ ] Adequate spacing between buttons to prevent misclicks
+- [ ] Adequate spacing between buttons to prevent mis-taps
 - [ ] Visual feedback on button press (scale/opacity transitions)
 - [ ] Best-effort vibration on supported browsers; primary iPhone Safari has no web vibration API
 - [ ] Confirmation dialogs on irreversible actions (New Set, New Match)
@@ -211,15 +210,8 @@ This document serves as the source of truth for app functionality. Update this d
 
 ---
 
-### RD-002: Serve Type Expansion
-**Description:** Add categories beyond OVER/NET/FOOT — e.g., ace, out (long/wide), let — for competitive team analysis. Minimal addition would be to split "Over" green button to two green buttons with OVER/IN and OVER/OUT. Other ideas need a mockup as the buttons are intended to be 'fat finger' compliant.
-
-**Status:** Implemented (v3.0.0 — OVER/IN + OVER/OUT split; aces and legal net-touch serves recorded as OVER/IN)
-
----
-
 ### RD-003: Data Visualization
-**Description:** Simple bar charts or trend lines showing in-play rate over turns/sets/matches. Achievable with pure CSS or canvas — no library needed. Also need to add stats that show current percentage for whole of tournament (multiple matches within a day or two) and/or current match.
+**Description:** Add history visualizations such as bar charts or trend lines showing in-play rate across turns, sets, matches, and a multi-match tournament. Prefer a lightweight implementation using CSS bar widths or canvas without adding a library.
 
 **Status:** Roadmap
 
@@ -232,8 +224,8 @@ This document serves as the source of truth for app functionality. Update this d
 
 ---
 
-### RD-005: Deeper Undo Stack Limit
-**Description:** Currently the undo stack is unbounded within a set. Consider a configurable depth limit (e.g., 50) to bound memory usage for very long sets. Consider with "Edit" mode for data from prior sets and matches that were entered incorrectly.
+### RD-005: Bounded Undo/Redo History
+**Description:** The implemented multi-level undo stack is unbounded within a set and has no redo. Evaluate a bounded history and redo support so courtside users can recover from accidental extra undos without allowing very long sets to consume unbounded memory. Define whether structural operations such as New Set, New Match, and Reset continue to clear the history; consider separately from editing prior sets or matches.
 
 **Status:** Roadmap
 
@@ -261,7 +253,7 @@ This document serves as the source of truth for app functionality. Update this d
 ---
 
 ### RD-009: Swipe Gesture Navigation
-**Description:** Touch-based left/right swipe between turns would feel natural and be faster than the below-fold navigation buttons.
+**Description:** Add touch-based left/right swipe navigation between turns as a faster alternative to the below-fold buttons. Retain visible navigation controls for accessibility and discoverability, and avoid conflicts with vertical page and history scrolling.
 
 **Status:** Roadmap
 
@@ -275,14 +267,35 @@ This document serves as the source of truth for app functionality. Update this d
 ---
 
 ### RD-011: Dependable iPhone Haptic Feedback
-**Description:** Courtside users want tactile confirmation for every serve tap, but iPhone Safari/WebKit does not expose the Vibration API. Revisit when WebKit adds an official capability, or evaluate a native wrapper with a supported haptics API. Do not depend on private or accessibility-control hacks for a scoring workflow.
+**Description:** The app already requests a 50 ms vibration for each serve on browsers that implement the Vibration API, but primary-client iPhone Safari/WebKit does not expose that API. Revisit when WebKit adds an official capability, or evaluate a native wrapper with a supported haptics API. Do not depend on private or accessibility-control hacks for a scoring workflow; a pure iPhone Safari PWA remains blocked from providing dependable haptics.
 
-**Status:** Roadmap — blocked for a pure iPhone Safari PWA pending an official web API; native packaging would be a separate product decision
+**Status:** Roadmap
 
 ---
 
 ### RD-012: App Icon and Favicon Redesign
 **Description:** Redesign the installed-PWA icon and browser favicon for clearer identification on the iPhone Home Screen while retaining maskable and cross-platform variants.
+
+**Status:** Roadmap
+
+---
+
+### RD-013: Configurable Advanced Serve Categories
+**Description:** The v3 model intentionally uses four fixed outcomes: aces and legal net-touch serves are OVER/IN, long/wide serves are OVER/OUT, and NET and FOOT remain faults. Evaluate optional distinct ace or legal net-touch outcomes, or user-configurable categories, for competitive-team analysis. Any expansion must define rate calculations and update the touch layout, data model and migration, history, CSV export, automated tests, and actual-iPhone mis-tap validation.
+
+**Status:** Roadmap
+
+---
+
+### RD-014: Accidental Duplicate-Tap Prevention
+**Description:** Reduce unintended duplicate serve recordings during fast courtside use. Evaluate a short 100–200 ms debounce and a stronger "just recorded" visual flash, while ensuring that legitimate rapid entries are not discarded and every accepted recording remains undoable.
+
+**Status:** Roadmap
+
+---
+
+### RD-015: Prominent Current-Turn Total
+**Description:** Show the combined total of all serve outcomes for the current turn prominently near or above the primary serve buttons instead of relying on the footer. Keep the total synchronized with category counts and undo without crowding the primary controls on iPhone Safari.
 
 **Status:** Roadmap
 
@@ -352,4 +365,6 @@ This document serves as the source of truth for app functionality. Update this d
 | 2026-02-27 | v2.2.0: Multi-level undo stack, version text visibility fix, test suite (112 tests), 4 defect fixes | claude |
 | 2026-04-08 | Added Roadmap section with future feature ideas; updated FR-002 for multi-undo | claude |
 | 2026-08-04 | Added Roadmap item | Darin (User) |
-| 2026-08-17 | v3.0.0: RD-002 serve type expansion (OVER/IN, OVER/OUT), data model v3, Playwright UAT | Cursor/Codex |
+| 2026-08-17 | v3.0.0: RD-002 implemented through FR-001 serve outcomes and NFR-002 touch-friendly 2×2 controls; data model v3 and Playwright UAT added | Cursor/Codex |
+| 2026-08-18 | Consolidated completed RD-002 requirements into FR-001 and NFR-002 and removed the item from Roadmap | Codex |
+| 2026-08-18 | Groomed stakeholder feature and UX notes: refined RD-003, RD-005, RD-009, and RD-011; added RD-013 through RD-015 | Darin (User)/Codex |
