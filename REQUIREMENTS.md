@@ -5,14 +5,14 @@ This document serves as the source of truth for app functionality. Update this d
 ## Functional Requirements
 
 ### FR-001: Serve Counting
-**Description:** Track three types of serves: OVER (successful), NET (hit net), FOOT (foot fault).
+**Description:** Track four serve outcomes: OVER/IN (clears the net and lands in bounds, including aces and legal net-touch serves), OVER/OUT (clears the net but lands out long/wide), NET (fails to clear the net), and FOOT (foot fault).
 
 **Acceptance Criteria:**
-- [ ] Large, touch-friendly buttons for each serve type
-- [ ] Visual distinction between serve types (green=OVER, red=NET, yellow=FOOT)
+- [ ] Large, touch-friendly buttons for each serve type in a 2×2 layout
+- [ ] Visual distinction between serve types (green=OVER/IN and OVER/OUT, red=NET, yellow=FOOT)
 - [ ] Display count for current turn prominently
 - [ ] Display cumulative set totals
-- [ ] Haptic feedback (vibration) on serve recording for tactile confirmation
+- [ ] Best-effort vibration on browsers that implement the Vibration API; unavailable on iPhone Safari/WebKit
 - [ ] Serve buttons disabled when viewing an old turn to prevent accidental edits
 
 **Status:** Implemented
@@ -42,7 +42,7 @@ This document serves as the source of truth for app functionality. Update this d
 - [ ] "New Set" button creates a fresh set (with confirmation dialog)
 - [ ] Set summary displays all turns with their stats
 - [ ] "Clear Set Data" removes all turns in current set (with confirmation)
-- [ ] Set success rate calculated and displayed
+- [ ] Set in-play rate calculated and displayed
 - [ ] "Delete Empty Set" removes current set if no serves were recorded (e.g., player didn't serve)
 - [ ] Auto-cleanup: creating a new set replaces the current set if it was entirely empty
 
@@ -81,7 +81,7 @@ This document serves as the source of truth for app functionality. Update this d
 - [ ] History modal shows all matches, sets, and turns
 - [ ] Matches displayed in reverse chronological order
 - [ ] Export button generates CSV with all data
-- [ ] CSV includes: Player, Date, Match, Set, Turn, Over, Net, Foot, Total, Success Rate
+- [ ] CSV includes: Player, Date, Match, Set, Turn, OverIn, OverOut, Net, Foot, Total, In-Play Rate
 - [ ] CSV fields properly escaped (commas, quotes, newlines) to prevent injection
 - [ ] CSV filename sanitized to remove special characters
 - [ ] "Export & New Player" exports data then resets for new player
@@ -91,11 +91,11 @@ This document serves as the source of truth for app functionality. Update this d
 ---
 
 ### FR-007: Statistics
-**Description:** Calculate and display success rates at turn and set levels.
+**Description:** Calculate and display neutral in-play rates at turn and set levels. Match outcomes and rule-defined success remain governed by USA Volleyball and OVR rules, not this app.
 
 **Acceptance Criteria:**
-- [ ] Turn success rate: (over / total) * 100 for current turn
-- [ ] Set success rate: (over / total) * 100 for all serves in set
+- [ ] Turn in-play rate: (overIn / total) * 100 for current turn
+- [ ] Set in-play rate: (overIn / total) * 100 for all serves in set
 - [ ] Stats displayed in footer and set summary
 - [ ] Per-turn stats shown in turn navigation list
 
@@ -138,7 +138,7 @@ This document serves as the source of truth for app functionality. Update this d
 **Acceptance Criteria:**
 - [ ] iOS Safari: apple-mobile-web-app-capable meta tag
 - [ ] iOS Safari: black-translucent status bar style
-- [ ] Safe area insets respected (notch handling)
+- [ ] Portrait safe-area insets respected; landscape Dynamic Island refinement remains in RD-008
 - [ ] Touch-friendly interactions (no tap highlight)
 - [ ] Works with webkit-specific scrolling
 
@@ -169,7 +169,7 @@ This document serves as the source of truth for app functionality. Update this d
 - [ ] Minimum touch target size of 44x44px for navigation buttons
 - [ ] Adequate spacing between buttons to prevent misclicks
 - [ ] Visual feedback on button press (scale/opacity transitions)
-- [ ] Haptic feedback (vibration) on serve recording
+- [ ] Best-effort vibration on supported browsers; primary iPhone Safari has no web vibration API
 - [ ] Confirmation dialogs on irreversible actions (New Set, New Match)
 
 **Status:** Implemented
@@ -196,7 +196,7 @@ This document serves as the source of truth for app functionality. Update this d
 - [ ] Light text (#eee, #fff) on dark backgrounds (#1a1a2e, #16213e)
 - [ ] Distinct colors for serve types (green, red, yellow on dark)
 - [ ] Muted colors (#aaa, #666) for secondary text
-- [ ] Success indicators in green (#2ecc71)
+- [ ] In-play indicators in green (#2ecc71)
 
 **Status:** Implemented
 
@@ -212,28 +212,28 @@ This document serves as the source of truth for app functionality. Update this d
 ---
 
 ### RD-002: Serve Type Expansion
-**Description:** Add categories beyond OVER/NET/FOOT — e.g., ace, out (long/wide), let — for competitive team analysis.
+**Description:** Add categories beyond OVER/NET/FOOT — e.g., ace, out (long/wide), let — for competitive team analysis. Minimal addition would be to split "Over" green button to two green buttons with OVER/IN and OVER/OUT. Other ideas need a mockup as the buttons are intended to be 'fat finger' compliant.
 
-**Status:** Roadmap
+**Status:** Implemented (v3.0.0 — OVER/IN + OVER/OUT split; aces and legal net-touch serves recorded as OVER/IN)
 
 ---
 
 ### RD-003: Data Visualization
-**Description:** Simple bar charts or trend lines showing success rate over turns/sets/matches. Achievable with pure CSS or canvas — no library needed.
+**Description:** Simple bar charts or trend lines showing in-play rate over turns/sets/matches. Achievable with pure CSS or canvas — no library needed. Also need to add stats that show current percentage for whole of tournament (multiple matches within a day or two) and/or current match.
 
 **Status:** Roadmap
 
 ---
 
 ### RD-004: Cloud Sync / Sharing
-**Description:** localStorage is device-locked. Options range from JSON import/export (simple) to Firebase sync (medium) to URL-encoded sharing (for small datasets).
+**Description:** localStorage is device-locked. Options range from JSON import/export (simple) to Firebase sync (medium) to URL-encoded sharing (for small datasets). Netlify options preferred if low to zero cost.
 
 **Status:** Roadmap
 
 ---
 
 ### RD-005: Deeper Undo Stack Limit
-**Description:** Currently the undo stack is unbounded within a set. Consider a configurable depth limit (e.g., 50) to bound memory usage for very long sets.
+**Description:** Currently the undo stack is unbounded within a set. Consider a configurable depth limit (e.g., 50) to bound memory usage for very long sets. Consider with "Edit" mode for data from prior sets and matches that were entered incorrectly.
 
 **Status:** Roadmap
 
@@ -254,7 +254,7 @@ This document serves as the source of truth for app functionality. Update this d
 ---
 
 ### RD-008: Landscape / Tablet Support
-**Description:** Add media queries for wider viewports. A max-width container or responsive column layout would improve the tablet experience.
+**Description:** Add media queries for wider viewports. A max-width container or responsive column layout would improve the tablet experience. Physical iPhone UAT on iOS 26.6 found that the landscape Dynamic Island makes left-side content challenging to see; add horizontal safe-area insets and validate both landscape orientations.
 
 **Status:** Roadmap
 
@@ -267,9 +267,53 @@ This document serves as the source of truth for app functionality. Update this d
 
 ---
 
+### RD-010: Empty Turns Removed Automatically
+**Description:** New Set and New Match carry forward the place-holder starting point for a turn that might not have happened. For example, server serves and it's out. Next team serves and back and forth, but server being tracked doesn't serve again.
+
+**Status:** Roadmap
+
+---
+
+### RD-011: Dependable iPhone Haptic Feedback
+**Description:** Courtside users want tactile confirmation for every serve tap, but iPhone Safari/WebKit does not expose the Vibration API. Revisit when WebKit adds an official capability, or evaluate a native wrapper with a supported haptics API. Do not depend on private or accessibility-control hacks for a scoring workflow.
+
+**Status:** Roadmap — blocked for a pure iPhone Safari PWA pending an official web API; native packaging would be a separate product decision
+
+---
+
+### RD-012: App Icon and Favicon Redesign
+**Description:** Redesign the installed-PWA icon and browser favicon for clearer identification on the iPhone Home Screen while retaining maskable and cross-platform variants.
+
+**Status:** Roadmap
+
+---
+
+
 ## Data Model
 
-### Version 2 Schema
+### Version 3 Schema
+
+```javascript
+{
+  version: 3,
+  playerName: string,
+  matches: [
+    {
+      id: number (timestamp via Date.now()),
+      date: string (ISO date),
+      sets: [
+        {
+          turns: [
+            { overIn: number, overOut: number, net: number, foot: number }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Version 2 Schema (legacy)
 
 ```javascript
 {
@@ -294,6 +338,8 @@ This document serves as the source of truth for app functionality. Update this d
 ### Migration Notes
 - Version 1 used flat sets without turns
 - Migration from v1 wraps existing set data in a single turn
+- Migration from v2 maps `over` → `overIn`, sets `overOut` to 0
+- Successful migrations are written back to localStorage immediately
 
 ---
 
@@ -305,3 +351,5 @@ This document serves as the source of truth for app functionality. Update this d
 | 2026-02-27 | v2.1.0: Added empty set removal, old-turn safety, haptic feedback, confirmations, CSV escaping, error recovery, network-first SW, proper icons | claude |
 | 2026-02-27 | v2.2.0: Multi-level undo stack, version text visibility fix, test suite (112 tests), 4 defect fixes | claude |
 | 2026-04-08 | Added Roadmap section with future feature ideas; updated FR-002 for multi-undo | claude |
+| 2026-08-04 | Added Roadmap item | Darin (User) |
+| 2026-08-17 | v3.0.0: RD-002 serve type expansion (OVER/IN, OVER/OUT), data model v3, Playwright UAT | Cursor/Codex |

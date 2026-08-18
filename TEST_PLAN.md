@@ -1,18 +1,19 @@
 # VB Serve Tracker - Comprehensive Test Plan
 
 **Purpose**: TDD baseline and regression testing for all features
-**Last Updated**: 2026-02-27
-**App Version**: v2.2.0 (turns within sets)
+**Last Updated**: 2026-08-17
+**App Version**: v3.0.0 (OVER/IN and OVER/OUT)
 
 ---
 
 ## Quick Regression Checklist
 
-Run this full checklist after every code change:
+Run `npm run check` after every code change. Use this checklist for the final real-iPhone smoke test and for exploratory testing:
 
 | Category | Test | Pass |
 |----------|------|------|
-| Serve | OVER button records | [ ] |
+| Serve | OVER/IN button records | [ ] |
+| Serve | OVER/OUT button records | [ ] |
 | Serve | NET button records | [ ] |
 | Serve | FOOT button records | [ ] |
 | Turn | Next Turn creates empty turn | [ ] |
@@ -28,7 +29,7 @@ Run this full checklist after every code change:
 | History | CSV exports correctly | [ ] |
 | Old Turn | Banner shown, buttons disabled | [ ] |
 | Old Turn | Return to Latest works | [ ] |
-| Haptic | Vibration on serve tap | [ ] |
+| Haptic | Serve records without errors when vibration is unavailable | [ ] |
 | PWA | App works offline | [ ] |
 | Data | Data persists across sessions | [ ] |
 | Data | Corrupted localStorage recovers | [ ] |
@@ -50,29 +51,50 @@ Run this full checklist after every code change:
 10. [UI & Responsiveness](#10-ui--responsiveness)
 11. [Haptic Feedback & Safety](#11-haptic-feedback--safety)
 12. [Data Recovery & CSV Safety](#12-data-recovery--csv-safety)
+13. [RD-002: Serve Type Expansion](#13-rd-002-serve-type-expansion-v300)
 
 ---
 
 ## 1. Serve Counting
 
-### TC-1.1: OVER Button Records Serve
+### TC-1.1: OVER/IN Button Records Serve
 
 **Precondition**: App loaded, on latest turn
 
 **Steps**:
-1. Note current OVER count
-2. Tap the green OVER button
+1. Note current OVER/IN count
+2. Tap the green OVER/IN button
 
 **Expected**:
-- OVER count increments by 1
+- OVER/IN count increments by 1
 - Set total updates
 - Button shows visual feedback (scale animation)
-- Success rate recalculates
+- In-play rate recalculates
 
 **Verify**:
 - [ ] Count on button updates immediately
 - [ ] Set total in parentheses updates
 - [ ] Footer stats update
+
+---
+
+### TC-1.1b: OVER/OUT Button Records Serve
+
+**Precondition**: App loaded, on latest turn
+
+**Steps**:
+1. Note current OVER/OUT count
+2. Tap the green OVER/OUT button
+
+**Expected**:
+- OVER/OUT count increments by 1
+- Set total updates
+- In-play rate recalculates with OVER/OUT included in the denominator only
+
+**Verify**:
+- [ ] Count on button updates immediately
+- [ ] Set total in parentheses updates
+- [ ] In-play rate does not count OVER/OUT as in play
 
 ---
 
@@ -87,11 +109,11 @@ Run this full checklist after every code change:
 **Expected**:
 - NET count increments by 1
 - Set total updates
-- Success rate decreases (NET reduces success %)
+- In-play rate decreases (NET is included in the denominator only)
 
 **Verify**:
 - [ ] Count updates
-- [ ] Success rate reflects NET as failure
+- [ ] In-play rate reflects NET in the total
 
 ---
 
@@ -106,11 +128,11 @@ Run this full checklist after every code change:
 **Expected**:
 - FOOT count increments by 1
 - Set total updates
-- Success rate decreases (FOOT reduces success %)
+- In-play rate decreases (FOOT is included in the denominator only)
 
 **Verify**:
 - [ ] Count updates
-- [ ] Success rate reflects FOOT as failure
+- [ ] In-play rate reflects FOOT in the total
 
 ---
 
@@ -119,7 +141,7 @@ Run this full checklist after every code change:
 **Precondition**: App loaded
 
 **Steps**:
-1. Rapidly tap OVER button 10 times in quick succession
+1. Rapidly tap OVER/IN button 10 times in quick succession
 
 **Expected**:
 - All 10 taps register
@@ -139,7 +161,7 @@ Run this full checklist after every code change:
 **Steps**:
 1. Navigate to turn 1 (not latest)
 2. Observe serve buttons
-3. Try to tap OVER button
+3. Try to tap a serve button
 
 **Expected**:
 - Serve buttons are visually disabled (grayed out, opacity 0.4)
@@ -152,6 +174,18 @@ Run this full checklist after every code change:
 - [ ] Orange banner visible with correct turn number
 - [ ] Taps ignored — no count changes
 - [ ] "Return to Latest" button present in banner
+
+---
+
+### TC-1.6: Unknown Serve Type Rejected (Automated)
+
+**Purpose**: Protect turn data if a malformed DOM event or future integration supplies an unsupported serve type.
+
+**Expected**:
+- Turn data remains unchanged
+- Undo history remains unchanged
+
+**Automated**: `test.js` TC-1.6
 
 ---
 
@@ -185,13 +219,13 @@ Run this full checklist after every code change:
 **Precondition**: Just recorded multiple serves
 
 **Steps**:
-1. Record 7 OVER serves
+1. Record 7 OVER/IN serves
 2. Tap "Undo" button 7 times
 
 **Expected**:
-- Each undo decrements OVER count by 1
+- Each undo decrements OVER/IN count by 1
 - Stats recalculate after each undo
-- After 7 undos, OVER count is back to 0
+- After 7 undos, OVER/IN count is back to 0
 - 8th undo has no effect (stack empty)
 
 **Verify**:
@@ -643,9 +677,9 @@ Run this full checklist after every code change:
 **Expected**:
 - Match cards show match number and date
 - Each set has header with set number
-- Each turn shows: over, net, foot, success rate
+- Each turn shows: IN, OUT, NET, FOOT, and in-play rate
 - Set totals shown at bottom of each set
-- Color coding: green=over, red=net, orange=foot
+- Color coding: green=IN/OUT, red=NET, orange=FOOT
 
 **Verify**:
 - [ ] Hierarchical structure correct
@@ -717,19 +751,20 @@ Run this full checklist after every code change:
 
 **Steps**:
 1. Create specific test data:
-   - Turn 1: 5 over, 2 net, 1 foot
-   - Turn 2: 3 over, 1 net, 0 foot
+   - Turn 1: 5 over/in, 1 over/out, 2 net, 1 foot
+   - Turn 2: 3 over/in, 0 over/out, 1 net, 0 foot
 2. Export CSV
 3. Open CSV file
 
 **Expected**:
-CSV header: `Player,Date,Match,Set,Turn,Over,Net,Foot,Total,Success Rate`
+CSV header: `Player,Date,Match,Set,Turn,OverIn,OverOut,Net,Foot,Total,In-Play Rate`
 Data rows match recorded data exactly
 
 **Verify**:
 - [ ] All columns present
-- [ ] Turn 1 row: 5,2,1,8,63%
-- [ ] Turn 2 row: 3,1,0,4,75%
+- [ ] Turn 1 row: 5,1,2,1,9,56%
+- [ ] Turn 2 row: 3,0,1,0,4,75%
+- [ ] Total equals OverIn + OverOut + Net + Foot for every row
 - [ ] Match/Set numbers correct
 
 ---
@@ -869,7 +904,7 @@ Data rows match recorded data exactly
 **Precondition**: Fresh app state
 
 **Steps**:
-1. Record serves (5 over, 2 net, 1 foot)
+1. Record serves (5 over/in, 1 over/out, 2 net, 1 foot)
 2. Open DevTools > Application > Local Storage
 3. Check `volleyball-serve-tracker` key
 
@@ -968,16 +1003,16 @@ Data rows match recorded data exactly
 
 ## 9. Statistics Display
 
-### TC-9.1: Set Success Rate Calculation
+### TC-9.1: Set In-Play Rate Calculation
 
 **Precondition**: Fresh set
 
 **Steps**:
-1. Record: 7 over, 2 net, 1 foot (10 total)
+1. Record: 7 over/in, 2 net, 1 foot (10 total)
 2. Check footer
 
 **Expected**:
-- Set success rate = 70% (7/10)
+- Set in-play rate = 70% (7/10)
 
 **Verify**:
 - [ ] Rate shows 70%
@@ -985,12 +1020,12 @@ Data rows match recorded data exactly
 
 ---
 
-### TC-9.2: Turn Success Rate
+### TC-9.2: Turn In-Play Rate
 
 **Precondition**: Fresh turn
 
 **Steps**:
-1. Record: 3 over, 1 net, 1 foot (5 total)
+1. Record: 3 over/in, 1 net, 1 foot (5 total)
 2. Check footer
 
 **Expected**:
@@ -1041,8 +1076,8 @@ Data rows match recorded data exactly
 **Precondition**: Multiple turns
 
 **Steps**:
-1. Turn 1: 5 over, 0 net, 0 foot (100%)
-2. Turn 2: 0 over, 5 net, 0 foot (0%)
+1. Turn 1: 5 over/in, 0 over/out, 0 net, 0 foot (100%)
+2. Turn 2: 0 over/in, 0 over/out, 5 net, 0 foot (0%)
 3. Check stats
 
 **Expected**:
@@ -1052,6 +1087,41 @@ Data rows match recorded data exactly
 **Verify**:
 - [ ] Turn rate changes with navigation
 - [ ] Set rate stays at 50%
+
+---
+
+### TC-9.6: OVER/OUT Denominator Handling (Automated)
+
+**Expected**:
+- OVER/OUT is included in total serves
+- OVER/OUT is not included in the in-play numerator
+
+**Automated**: `test.js` TC-9.6
+
+---
+
+### TC-9.7: Math Boundary and Rounding Table (Automated)
+
+**Cases**:
+- Empty counts return total 0 and rate 0%
+- All OVER/IN returns 100%
+- All OVER/OUT returns 0%
+- One of three rounds to 33%
+- Two of three rounds to 67%
+- A mixed four-category sample returns the expected total and rate
+
+**Automated**: `test.js` TC-9.7
+
+---
+
+### TC-9.8: Set Aggregation Integrity (Automated)
+
+**Expected**:
+- Each serve category is summed across turns
+- Aggregate total and in-play rate are correct
+- Source turn data is not mutated
+
+**Automated**: `test.js` TC-9.8
 
 ---
 
@@ -1236,7 +1306,7 @@ Run key tests on each platform combination:
 **Precondition**: Android device or browser with vibration API support
 
 **Steps**:
-1. Tap any serve button (OVER, NET, FOOT)
+1. Tap any serve button (OVER/IN, OVER/OUT, NET, FOOT)
 
 **Expected**:
 - Short vibration pulse (50ms) on each tap
@@ -1386,7 +1456,7 @@ Run key tests on each platform combination:
 1. Scroll to below-fold area (past Quick Actions to "Start Fresh")
 
 **Expected**:
-- "Serve Tracker v2.2.0" text visible at the bottom
+- "Serve Tracker v3.0.0" text visible at the bottom
 
 **Verify**:
 - [ ] Version text present
@@ -1437,7 +1507,7 @@ Run key tests on each platform combination:
 ### EC-4: Rapid Action Spam
 
 **Steps**:
-1. Rapidly tap: OVER, OVER, Undo, NET, Next Turn, Undo
+1. Rapidly tap: OVER/IN, OVER/IN, Undo, NET, Next Turn, Undo
 2. Verify final state
 
 **Expected**:
@@ -1458,13 +1528,65 @@ Run key tests on each platform combination:
 
 ---
 
+## Automation Coverage Map
+
+`npm run check` is the required deterministic gate. It runs lint, 147 dependency-free unit assertions, 24 iPhone-Safari/WebKit tests (including two visual snapshots), and one Chromium service-worker/offline test.
+
+| Area | Test-plan IDs | Unit (`test.js`) | Browser / visual coverage | Remaining real-device check |
+|------|---------------|------------------|---------------------------|-----------------------------|
+| Serve counting | TC-1.1–1.6 | Counts, rapid calls, old-turn guard, unknown-type guard | `rd002-serve-types.spec.js`; old-turn lock in `core-workflows.spec.js`; main visual baseline | Rapid physical taps, animation feel |
+| Turn management | TC-2.1–2.10 | All listed state transitions and blocked deletes | Create, navigate, lock, return, undo, and toast in `core-workflows.spec.js` | Exploratory only |
+| Set management | TC-3.1–3.7 | Create, cancel, clear, delete, blocked cases, auto-cleanup | Create/cancel/clear in `core-workflows.spec.js` | Exploratory only |
+| Match management | TC-4.1–4.2 | Create, confirm, date | Accept/cancel in `core-workflows.spec.js` | Date/time-zone smoke check |
+| Player name | TC-5.1–5.4 | Save/load, export, empty-name fallback | Input/reload and Export & New Player in `core-workflows.spec.js` | Real iOS keyboard dismissal (see scroll TC-03) |
+| History and CSV | TC-6.1–6.7 | CSV content, escaping, filename, totals | Modal open/close, download/reset, RD-002 CSV, scrolling, and history visual baseline | Share/download destination on iPhone |
+| PWA | TC-7.1–7.5 | Service-worker source linted | TC-7.1/7.2 offline shell in `pwa-offline.spec.js` on Chromium | TC-7.1 and TC-7.3 on installed iPhone PWA; TC-7.5 after deployment |
+| Persistence | TC-8.1–8.5 | Save, migrations, reset/cancel | Reload persistence, v2→v3 persistence, reset/cancel, corrupted storage | Force-close/reopen installed PWA |
+| Statistics | TC-9.1–9.8 | Totals, denominator, zero, rounding boundaries, aggregation immutability | Turn/set rates and RD-002 3/6 case | None |
+| UI / responsive | TC-10.1–10.8 | Static version/fallback checks | iPhone viewport, landscape reflow, scrolling, no overflow, touch-target geometry, toast, two snapshots | TC-10.1 animation feel and TC-10.2 physical notch/safe areas |
+| Haptic / safety | TC-11.1–11.3 | Supported-browser vibration call, unsupported-browser fallback, and confirmation guards | Set/match confirmation accept/cancel | Vibration is not available on iPhone Safari/WebKit |
+| Recovery / CSV safety | TC-12.1–12.6 | Recovery, CSV escaping/sanitization, noscript, version | Corrupted-storage recovery in WebKit | JavaScript-disabled display, if desired |
+| Edge cases | EC-1–EC-5 | EC-1, EC-3, EC-4 | Long history/turn lists exercise larger datasets | EC-2 long-name layout and EC-5 browser navigation |
+
+### Browser Project Ownership
+
+- `iphone-safari` is the primary product project. It uses Playwright WebKit with an iPhone 13 profile at the app's 375×667 target viewport.
+- `chromium-pwa` owns only the deterministic offline service-worker test. Playwright WebKit cannot reliably reload a page after its context is forced offline; actual iPhone Safari/PWA remains the release smoke test for that behavior.
+- Visual baselines live beside `e2e/visual-regression.spec.js`. Run `npm run test:visual:update` only for an intentional UI change, inspect both images, then run `npm run check`.
+
+### Risk-Based Real-iPhone Release Smoke Test
+
+`npm run check` is the default regression gate. Repeat only the actual-device checks connected to the changed risk:
+
+- UI, touch, or viewport changes: physical rapid taps, keyboard dismissal, scrolling, rotation, and safe areas.
+- Storage or service-worker changes: Home Screen launch, offline launch/recording, force-close persistence, and online recovery.
+- Export changes: download, open, columns, and row arithmetic.
+- Vibration changes: verify graceful fallback on iPhone Safari; test physical vibration only on a browser that implements the Vibration API.
+
+Do not manually repeat deterministic history, CSV, math, migration, or workflow cases for unrelated enhancements; Playwright and unit tests own those regressions. Android remains an optional compatibility pass while iPhone Safari is the sole primary client.
+
 ## Test Results Log
 
 | Date | Tester | Platform | Version | Pass/Fail | Notes |
 |------|--------|----------|---------|-----------|-------|
+| 2026-08-17 | Darin Archer | iPhone `MG7P4LL/A`, Safari + installed PWA, iOS 26.6 | v3.0.0 PR #5 preview | Pass with accepted limitations | Core tracking, math, history, CSV, rotation, installation, force-close persistence, offline use, and online recovery passed. WebKit vibration unavailable as expected. Landscape Dynamic Island ergonomics and icon redesign tracked in RD-008/RD-012. |
 | | | | | | |
 | | | | | | |
-| | | | | | |
+
+---
+
+## 13. RD-002: Serve Type Expansion (v3.0.0)
+
+Automated via `e2e/rd002-serve-types.spec.js` (Playwright) and unit tests TC-1.1b, TC-6.7, TC-8.2g–j, and TC-9.6. Offline PWA behavior is covered separately by `e2e/pwa-offline.spec.js`.
+
+| Test | Description | Manual | Playwright |
+|------|-------------|--------|------------|
+| RD-002.1 | 2×2 equal-row layout: OVER/IN, OVER/OUT, NET, FOOT; touch targets ≥44px | [x] | [x] |
+| RD-002.2 | Each button increments its counter | [x] | [x] |
+| RD-002.3 | In-play rate = OVER/IN ÷ total (OVER/OUT not counted in numerator) | [x] | [x] |
+| RD-002.4 | v2 data migrates and persists: legacy `over` → `overIn` | [x] | [x] |
+| RD-002.5 | History modal shows IN/OUT/NET/FOOT per turn without horizontal overflow | [x] | [x] |
+| RD-002.6 | CSV Total column = OverIn + OverOut + Net + Foot | [x] | [x] |
 
 ---
 
@@ -1482,3 +1604,4 @@ Run key tests on each platform combination:
 | 2026-02-27 | v2.1.0: Updated TC-1.5, TC-2.6, TC-3.1, TC-4.1; added TC-2.10, TC-3.4-3.7, TC-11.1-11.3, TC-12.1-12.6; updated regression checklist and platform matrix |
 | 2026-02-27 | v2.2.0: Automated test suite (112 tests) added; verified all test cases pass; fixed 4 defects found during testing |
 | 2026-04-08 | v2.2.0: Updated TC-2.2 for multi-undo behavior; updated TC-12.6 version/color references |
+| 2026-08-17 | v3.0.0: Updated regression cases for four serve outcomes; added 148 unit assertions, 24 iPhone-Safari Playwright tests (including two visual baselines), one Chromium offline PWA test, ESLint, traceability, CI, and physical iPhone UAT evidence |

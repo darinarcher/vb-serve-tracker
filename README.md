@@ -6,9 +6,9 @@ A mobile-first Progressive Web App for tracking volleyball serve statistics duri
 
 ## Features
 
-- **Real-time serve tracking** - Tap to record successful serves, net faults, or foot faults with haptic feedback
+- **Real-time serve tracking** - Tap to record OVER/IN, OVER/OUT, NET, or FOOT with immediate visual feedback and best-effort vibration on supported browsers
 - **Turn-based organization** - Track serves by turn within sets and matches
-- **Live statistics** - See your success rate update instantly for both current turn and set totals
+- **Live statistics** - See the in-play rate update instantly for both current turn and set totals
 - **Match history** - Review past matches with detailed per-turn breakdowns
 - **CSV export** - Download your data for analysis in spreadsheets (properly escaped)
 - **Works offline** - Full PWA support with network-first service worker caching
@@ -55,12 +55,15 @@ A mobile-first Progressive Web App for tracking volleyball serve statistics duri
 
 ```
 vbtracker/
-├── index.html      # Main app (HTML, CSS, and JS in single file)
-├── manifest.json   # PWA manifest for installability
-├── sw.js           # Service worker for offline caching (network-first)
+├── index.html          # Main app (HTML, CSS, and JS in single file)
+├── manifest.json       # PWA manifest for installability
+├── sw.js               # Service worker for offline caching (network-first)
+├── test.js             # Dependency-free Node.js unit tests
+├── e2e/                # Playwright acceptance tests
+├── package.json        # Test tooling and scripts
 ├── icons/
-│   └── icon.svg    # App icon (volleyball-themed SVG)
-└── .netlify/       # Netlify configuration
+│   └── icon.svg        # App icon (volleyball-themed SVG)
+└── .netlify/           # Netlify configuration
 ```
 
 ## Deployment
@@ -87,9 +90,12 @@ Simply drag the project folder to [Netlify Drop](https://app.netlify.com/drop).
 
 ### Recording Serves
 
-- **OVER (green)** - Successful serve that cleared the net
-- **NET (red)** - Serve hit the net
+- **OVER/IN (green)** - Serve cleared the net and landed in bounds (includes aces and legal net-touch serves)
+- **OVER/OUT (green)** - Serve cleared the net but went out long or wide
+- **NET (red)** - Serve failed to clear the net
 - **FOOT (orange)** - Foot fault
+
+The in-play rate is `OVER/IN ÷ total serves`. It is a tracking metric, not a replacement for USA Volleyball or OVR rules.
 
 ### Navigation
 
@@ -108,6 +114,38 @@ Simply drag the project folder to [Netlify Drop](https://app.netlify.com/drop).
 - Use "Delete Empty Set" if a set was created but the player didn't serve
 - Use "Delete Empty Turn" to remove turns with no serves recorded
 
+## Testing
+
+```bash
+# Lint all JavaScript, including the inline app script
+npm run lint
+
+# Unit tests (Node.js, no browser)
+npm run test:unit
+
+# Playwright UAT (iPhone Safari/WebKit plus Chromium offline-PWA coverage)
+npm ci
+npx playwright install webkit chromium
+npm run test:uat
+
+# Primary iPhone-Safari project only
+npm run test:uat:iphone
+
+# Review/update intentional iPhone visual changes
+npm run test:visual
+npm run test:visual:update
+
+# Complete local/CI quality gate
+npm run check
+```
+
+GitHub Actions runs `npm run check` automatically for pull requests and pushes to `main`. The deterministic suite covers 148 unit assertions, 24 emulated iPhone-Safari tests (including two visual snapshots), and one Chromium offline-PWA test. Physical iPhone checks are risk-based and limited to behavior emulation cannot reproduce; see `TEST_PLAN.md`.
+
+### iPhone Platform Notes
+
+- iPhone Safari/WebKit does not expose the Vibration API, so serve taps cannot provide dependable haptic feedback in the PWA. The guarded vibration enhancement remains available to supporting browsers.
+- v3.0.0 passed physical iPhone Safari and installed-PWA UAT on model `MG7P4LL/A` with iOS 26.6. Landscape safe-area ergonomics around the Dynamic Island and an app-icon redesign remain roadmap work.
+
 ## Contributing
 
 Contributions are welcome! Here's how to help:
@@ -123,7 +161,7 @@ Contributions are welcome! Here's how to help:
 ### Development Guidelines
 
 - Keep the single-file architecture (HTML/CSS/JS in index.html)
-- Test on both mobile and desktop browsers
+- Treat iPhone Safari as the primary browser; use the documented real-iPhone release smoke test for device-only behavior
 - Maintain PWA functionality (test offline mode)
 - Follow existing code style and naming conventions
 

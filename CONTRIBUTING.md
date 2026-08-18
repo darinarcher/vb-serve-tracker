@@ -10,6 +10,7 @@ Thanks for your interest in contributing to VB Serve Tracker! This is a simple v
 - A text editor
 - Basic knowledge of HTML, CSS, and JavaScript
 - Git for version control
+- Node.js 24 and npm for lint, unit, and browser tests
 
 ### Development Setup
 
@@ -38,14 +39,27 @@ Thanks for your interest in contributing to VB Serve Tracker! This is a simple v
 
    Use a local server (step above) to test the service worker and PWA features.
 
+4. **Install and run the quality gate**
+
+   ```bash
+   npm ci
+   npx playwright install webkit chromium
+   npm run check
+   ```
+
 ## Project Structure
 
 ```
 vbtracker/
-├── index.html      # Main app (HTML, CSS, and JS in one file)
-├── manifest.json   # PWA manifest
-├── sw.js           # Service worker for offline support
-└── TEST_PLAN.md    # Manual testing checklist
+├── index.html           # Main app (HTML, CSS, and JS in one file)
+├── manifest.json        # PWA manifest
+├── sw.js                # Service worker for offline support
+├── test.js              # Dependency-free unit regression suite
+├── e2e/                 # Playwright browser and visual tests
+├── TEST_PLAN.md         # Coverage map plus real-device checklist
+├── TEST_PLAN_SCROLL.md  # Mobile scroll coverage and device checks
+├── playwright.config.js
+└── package.json
 ```
 
 This is intentionally a single-file app for simplicity. All styles and scripts are inline in `index.html`.
@@ -203,24 +217,43 @@ refactor: extract storage functions to separate section
 Before submitting a PR, run through the relevant sections of `TEST_PLAN.md`:
 
 1. **Always test:**
-   - Basic serve counting (OVER, NET, FOOT buttons)
+   - Basic serve counting (OVER/IN, OVER/OUT, NET, FOOT buttons)
    - Undo functionality
    - Data persistence (refresh the page)
+   - Run `npm run check`
 
 2. **If you changed UI:**
    - Test on mobile viewport (375px width)
    - Test touch interactions
    - Check all buttons are reachable
+   - Run `npm run test:uat:iphone`
+   - If intended pixels changed, run `npm run test:visual:update`, inspect both baselines, and rerun `npm run check`
 
 3. **If you changed data/storage:**
    - Test localStorage persistence
    - Test with cleared storage
+   - Test migration from the previous data version
    - Verify no data loss on refresh
 
 4. **If you changed service worker:**
    - Test offline functionality
    - Clear cache and reload
-   - Test on actual mobile device if possible
+   - Test offline launch on the installed iPhone PWA
+
+5. **Before a release:**
+   - Complete only the applicable risk-based real-iPhone checks in `TEST_PLAN.md`
+   - Treat iPhone Safari as the primary product browser
+   - Keep Android testing as a non-blocking compatibility pass unless product scope changes
+
+### Red-to-Green Workflow
+
+For every defect fix or behavior change:
+
+1. Add or update a focused unit or Playwright test and confirm it fails.
+2. Make the smallest production change that satisfies the test.
+3. Run `npm run check` and confirm lint, unit tests, and Playwright all pass.
+4. Keep the applicable `TC-*` identifier in the test name when automating a manual test-plan case.
+5. Update the coverage map when a manual case becomes automated or when a device-only boundary changes.
 
 ## Pull Request Process
 
@@ -234,9 +267,9 @@ Before submitting a PR, run through the relevant sections of `TEST_PLAN.md`:
 
 3. **Checklist** (include in PR):
    ```
-   - [ ] Tested on Chrome
-   - [ ] Tested on Safari/mobile
-   - [ ] Ran TEST_PLAN.md regression checklist
+   - [ ] Ran npm run check
+   - [ ] Inspected visual changes and updated baselines intentionally
+   - [ ] Completed applicable real-iPhone checks from TEST_PLAN.md
    - [ ] Code follows style guidelines
    - [ ] Commit messages follow format
    ```
@@ -244,6 +277,8 @@ Before submitting a PR, run through the relevant sections of `TEST_PLAN.md`:
 4. **Review**: A maintainer will review your PR. Be responsive to feedback.
 
 5. **Merge**: Once approved and CI passes, your PR will be merged.
+
+The `main` branch should require a pull request and the GitHub Actions check named **Lint, unit, and browser tests** before merge.
 
 ## Questions?
 

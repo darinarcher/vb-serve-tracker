@@ -77,8 +77,8 @@
 
         .buttons-container {
             flex: 1;
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-rows: repeat(2, minmax(0, 1fr));
             padding: 12px;
             gap: 12px;
             min-height: 300px;
@@ -115,16 +115,23 @@
             margin-top: 2px;
         }
 
-        .btn-over {
-            flex: 4;
-            background: linear-gradient(145deg, #2ecc71, #27ae60);
-            color: white;
-        }
-
         .btn-row {
-            flex: 3;
+            flex: 1;
             display: flex;
             gap: 12px;
+            min-height: 0;
+        }
+
+        .btn-over-in,
+        .btn-over-out {
+            flex: 1;
+            background: linear-gradient(145deg, #2ecc71, #27ae60);
+            color: white;
+            font-size: 24px;
+        }
+
+        .btn-over-out {
+            background: linear-gradient(145deg, #27ae60, #1e8449);
         }
 
         .btn-net {
@@ -295,10 +302,13 @@
 
         .turn-stats {
             display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
             gap: 10px;
         }
 
-        .turn-stats .over { color: #2ecc71; }
+        .turn-stats .over-in { color: #2ecc71; }
+        .turn-stats .over-out { color: #58d68d; }
         .turn-stats .net { color: #e74c3c; }
         .turn-stats .foot { color: #f39c12; }
 
@@ -440,10 +450,13 @@
 
         .turn-item-stats {
             display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
             gap: 8px;
         }
 
-        .turn-item-stats .over { color: #2ecc71; }
+        .turn-item-stats .over-in { color: #2ecc71; }
+        .turn-item-stats .over-out { color: #58d68d; }
         .turn-item-stats .net { color: #e74c3c; }
         .turn-item-stats .foot { color: #f39c12; }
 
@@ -519,21 +532,28 @@
     </div>
 
     <div class="buttons-container">
-        <button class="serve-btn btn-over" data-type="over">
-            OVER
-            <span class="count" id="overCount">0</span>
-            <span class="turn-count" id="overTurnCount">(turn: 0)</span>
-        </button>
+        <div class="btn-row">
+            <button class="serve-btn btn-over-in" data-type="overIn">
+                OVER/IN
+                <span class="count" id="overInCount">0</span>
+                <span class="turn-count" id="overInTurnCount">(set: 0)</span>
+            </button>
+            <button class="serve-btn btn-over-out" data-type="overOut">
+                OVER/OUT
+                <span class="count" id="overOutCount">0</span>
+                <span class="turn-count" id="overOutTurnCount">(set: 0)</span>
+            </button>
+        </div>
         <div class="btn-row">
             <button class="serve-btn btn-net" data-type="net">
                 NET
                 <span class="count" id="netCount">0</span>
-                <span class="turn-count" id="netTurnCount">(turn: 0)</span>
+                <span class="turn-count" id="netTurnCount">(set: 0)</span>
             </button>
             <button class="serve-btn btn-foot" data-type="foot">
                 FOOT
                 <span class="count" id="footCount">0</span>
-                <span class="turn-count" id="footTurnCount">(turn: 0)</span>
+                <span class="turn-count" id="footTurnCount">(set: 0)</span>
             </button>
         </div>
     </div>
@@ -547,7 +567,7 @@
 
     <footer>
         <div class="stats">
-            Set: <span class="rate" id="successRate">0%</span>
+            Set in-play: <span class="rate" id="inPlayRate">0%</span>
         </div>
         <div class="stats-row">
             <span>Turn: <span id="turnRate">0%</span></span>
@@ -590,7 +610,7 @@
             "Export & New Player" downloads your data first, then resets for a new player.
         </p>
         <p style="font-size: 11px; color: #888; margin-top: 24px; text-align: center;">
-            Serve Tracker v2.2.0
+            Serve Tracker v3.0.0
         </p>
     </div>
 
@@ -616,18 +636,54 @@
 
     <script>
         const STORAGE_KEY = 'volleyball-serve-tracker';
-        const DATA_VERSION = 2;
+        const DATA_VERSION = 3;
+        const SERVE_TYPES = new Set(['overIn', 'overOut', 'net', 'foot']);
 
         let data = loadData();
         let undoStack = [];
         let viewingTurnIndex = null; // null = latest turn
+
+        function emptyTurn() {
+            return { overIn: 0, overOut: 0, net: 0, foot: 0 };
+        }
+
+        function getTurnTotal(turn) {
+            return turn.overIn + turn.overOut + turn.net + turn.foot;
+        }
+
+        function getInPlayRate(counts) {
+            const total = counts.overIn + counts.overOut + counts.net + counts.foot;
+            return total > 0 ? Math.round((counts.overIn / total) * 100) : 0;
+        }
+
+        function migrateTurn(turn) {
+            if (turn.overIn !== undefined) {
+                return {
+                    overIn: turn.overIn || 0,
+                    overOut: turn.overOut || 0,
+                    net: turn.net || 0,
+                    foot: turn.foot || 0
+                };
+            }
+            return {
+                overIn: turn.over || 0,
+                overOut: 0,
+                net: turn.net || 0,
+                foot: turn.foot || 0
+            };
+        }
 
         function loadData() {
             try {
                 const stored = localStorage.getItem(STORAGE_KEY);
                 if (stored) {
                     const parsed = JSON.parse(stored);
-                    return migrateData(parsed);
+                    const needsMigration = !parsed.version || parsed.version < DATA_VERSION;
+                    const migrated = migrateData(parsed);
+                    if (needsMigration) {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+                    }
+                    return migrated;
                 }
             } catch (e) {
                 console.error('Failed to load data, starting fresh:', e);
@@ -636,20 +692,27 @@
         }
 
         function migrateData(oldData) {
-            if (oldData.version === DATA_VERSION) return oldData;
-
-            // Migrate from v1 (flat sets) to v2 (turns within sets)
             if (!oldData.version || oldData.version < 2) {
                 oldData.matches.forEach(match => {
                     match.sets = match.sets.map(set => {
-                        if (set.turns) return set; // Already migrated
+                        if (set.turns) return set;
                         return {
-                            turns: [{ over: set.over || 0, net: set.net || 0, foot: set.foot || 0 }]
+                            turns: [migrateTurn({ over: set.over || 0, net: set.net || 0, foot: set.foot || 0 })]
                         };
                     });
                 });
-                oldData.version = DATA_VERSION;
+                oldData.version = 2;
             }
+
+            if (oldData.version < 3) {
+                oldData.matches.forEach(match => {
+                    match.sets.forEach(set => {
+                        set.turns = set.turns.map(migrateTurn);
+                    });
+                });
+                oldData.version = 3;
+            }
+
             return oldData;
         }
 
@@ -660,7 +723,7 @@
                 matches: [{
                     id: Date.now(),
                     date: new Date().toISOString().split('T')[0],
-                    sets: [{ turns: [{ over: 0, net: 0, foot: 0 }] }]
+                    sets: [{ turns: [emptyTurn()] }]
                 }]
             };
         }
@@ -713,7 +776,7 @@
         }
 
         function isTurnEmpty(turn) {
-            return turn.over === 0 && turn.net === 0 && turn.foot === 0;
+            return getTurnTotal(turn) === 0;
         }
 
         function isSetEmpty(set) {
@@ -722,10 +785,11 @@
 
         function getSetTotals(set) {
             return set.turns.reduce((acc, turn) => ({
-                over: acc.over + turn.over,
+                overIn: acc.overIn + turn.overIn,
+                overOut: acc.overOut + turn.overOut,
                 net: acc.net + turn.net,
                 foot: acc.foot + turn.foot
-            }), { over: 0, net: 0, foot: 0 });
+            }), { overIn: 0, overOut: 0, net: 0, foot: 0 });
         }
 
         function updateDisplay() {
@@ -743,24 +807,25 @@
             document.getElementById('turnInfo').textContent = `Turn ${turnNum}`;
             document.getElementById('playerName').value = data.playerName;
 
-            // Current turn counts on buttons (resets each turn)
-            document.getElementById('overCount').textContent = turn.over;
+            // Current turn counts on buttons
+            document.getElementById('overInCount').textContent = turn.overIn;
+            document.getElementById('overOutCount').textContent = turn.overOut;
             document.getElementById('netCount').textContent = turn.net;
             document.getElementById('footCount').textContent = turn.foot;
 
             // Set totals below
-            document.getElementById('overTurnCount').textContent = `(set: ${totals.over})`;
+            document.getElementById('overInTurnCount').textContent = `(set: ${totals.overIn})`;
+            document.getElementById('overOutTurnCount').textContent = `(set: ${totals.overOut})`;
             document.getElementById('netTurnCount').textContent = `(set: ${totals.net})`;
             document.getElementById('footTurnCount').textContent = `(set: ${totals.foot})`;
 
-            // Stats
-            const setTotal = totals.over + totals.net + totals.foot;
-            const setRate = setTotal > 0 ? Math.round((totals.over / setTotal) * 100) : 0;
-            document.getElementById('successRate').textContent = `${setRate}%`;
+            // Stats — in-play rate (OVER/IN includes aces and let serves)
+            const setTotal = getTurnTotal(totals);
+            const setRate = getInPlayRate(totals);
+            document.getElementById('inPlayRate').textContent = `${setRate}%`;
             document.getElementById('setTotal').textContent = setTotal;
 
-            const turnTotal = turn.over + turn.net + turn.foot;
-            const turnRate = turnTotal > 0 ? Math.round((turn.over / turnTotal) * 100) : 0;
+            const turnRate = getInPlayRate(turn);
             document.getElementById('turnRate').textContent = `${turnRate}%`;
 
             // Below fold updates
@@ -798,16 +863,16 @@
             // Turns list
             const turnsList = document.getElementById('turnsList');
             turnsList.innerHTML = set.turns.map((t, idx) => {
-                const tTotal = t.over + t.net + t.foot;
-                const tRate = tTotal > 0 ? Math.round((t.over / tTotal) * 100) : 0;
+                const tRate = getInPlayRate(t);
                 const isCurrent = idx === turnIdx;
                 const isLatest = idx === set.turns.length - 1;
                 return `<div class="turn-item ${isCurrent ? 'current' : ''}" data-turn="${idx}">
                     <span>Turn ${idx + 1}${isCurrent ? ' *' : ''}${isLatest ? ' (latest)' : ''}</span>
                     <div class="turn-item-stats">
-                        <span class="over">✓${t.over}</span>
-                        <span class="net">N${t.net}</span>
-                        <span class="foot">F${t.foot}</span>
+                        <span class="over-in">IN ${t.overIn}</span>
+                        <span class="over-out">OUT ${t.overOut}</span>
+                        <span class="net">NET ${t.net}</span>
+                        <span class="foot">FOOT ${t.foot}</span>
                         <span>(${tRate}%)</span>
                     </div>
                 </div>`;
@@ -820,6 +885,7 @@
         }
 
         function recordServe(type) {
+            if (!SERVE_TYPES.has(type)) return;
             if (viewingTurnIndex !== null) return; // Prevent edits to old turns
             const turn = getCurrentTurn();
             const turnIdx = getCurrentTurnIndex();
@@ -865,7 +931,7 @@
         }
 
         function nextTurn() {
-            getCurrentSet().turns.push({ over: 0, net: 0, foot: 0 });
+            getCurrentSet().turns.push(emptyTurn());
             viewingTurnIndex = null; // Go to latest
             undoStack.push({ type: 'newTurn' });
             saveData();
@@ -892,7 +958,7 @@
             if (isSetEmpty(getCurrentSet()) && match.sets.length > 1) {
                 match.sets.pop();
             }
-            match.sets.push({ turns: [{ over: 0, net: 0, foot: 0 }] });
+            match.sets.push({ turns: [emptyTurn()] });
             viewingTurnIndex = null;
             undoStack = [];
             saveData();
@@ -923,7 +989,7 @@
             data.matches.push({
                 id: Date.now(),
                 date: new Date().toISOString().split('T')[0],
-                sets: [{ turns: [{ over: 0, net: 0, foot: 0 }] }]
+                sets: [{ turns: [emptyTurn()] }]
             });
             viewingTurnIndex = null;
             undoStack = [];
@@ -958,7 +1024,7 @@
         function clearSetData() {
             if (!confirm('Clear all data for the current set?')) return;
             const set = getCurrentSet();
-            set.turns = [{ over: 0, net: 0, foot: 0 }];
+            set.turns = [emptyTurn()];
             viewingTurnIndex = null;
             undoStack = [];
             saveData();
@@ -1011,20 +1077,21 @@
         }
 
         function exportCSV() {
-            const rows = [['Player', 'Date', 'Match', 'Set', 'Turn', 'Over', 'Net', 'Foot', 'Total', 'Success Rate']];
+            const rows = [['Player', 'Date', 'Match', 'Set', 'Turn', 'OverIn', 'OverOut', 'Net', 'Foot', 'Total', 'In-Play Rate']];
 
             data.matches.forEach((match, matchIdx) => {
                 match.sets.forEach((set, setIdx) => {
                     set.turns.forEach((turn, turnIdx) => {
-                        const total = turn.over + turn.net + turn.foot;
-                        const rate = total > 0 ? Math.round((turn.over / total) * 100) : 0;
+                        const total = getTurnTotal(turn);
+                        const rate = getInPlayRate(turn);
                         rows.push([
                             csvEscape(data.playerName || 'Unknown'),
                             csvEscape(match.date),
                             matchIdx + 1,
                             setIdx + 1,
                             turnIdx + 1,
-                            turn.over,
+                            turn.overIn,
+                            turn.overOut,
                             turn.net,
                             turn.foot,
                             total,
@@ -1061,20 +1128,19 @@
 
                 match.sets.forEach((set, setIdx) => {
                     const totals = getSetTotals(set);
-                    const setTotal = totals.over + totals.net + totals.foot;
-                    const setRate = setTotal > 0 ? Math.round((totals.over / setTotal) * 100) : 0;
+                    const setRate = getInPlayRate(totals);
 
                     html += `<div class="set-header">Set ${setIdx + 1}</div>`;
 
                     set.turns.forEach((turn, turnIdx) => {
-                        const turnTotal = turn.over + turn.net + turn.foot;
-                        const turnRate = turnTotal > 0 ? Math.round((turn.over / turnTotal) * 100) : 0;
+                        const turnRate = getInPlayRate(turn);
                         html += `<div class="turn-row">
                             <span>Turn ${turnIdx + 1}</span>
                             <div class="turn-stats">
-                                <span class="over">✓${turn.over}</span>
-                                <span class="net">N${turn.net}</span>
-                                <span class="foot">F${turn.foot}</span>
+                                <span class="over-in">IN ${turn.overIn}</span>
+                                <span class="over-out">OUT ${turn.overOut}</span>
+                                <span class="net">NET ${turn.net}</span>
+                                <span class="foot">FOOT ${turn.foot}</span>
                                 <span>(${turnRate}%)</span>
                             </div>
                         </div>`;
@@ -1083,9 +1149,10 @@
                     html += `<div class="turn-row set-total">
                         <span>Set Total</span>
                         <div class="turn-stats">
-                            <span class="over">✓${totals.over}</span>
-                            <span class="net">N${totals.net}</span>
-                            <span class="foot">F${totals.foot}</span>
+                            <span class="over-in">IN ${totals.overIn}</span>
+                            <span class="over-out">OUT ${totals.overOut}</span>
+                            <span class="net">NET ${totals.net}</span>
+                            <span class="foot">FOOT ${totals.foot}</span>
                             <span>(${setRate}%)</span>
                         </div>
                     </div>`;
