@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [3.0.0] - Unreleased
+## [3.0.0] - 2026-08-17
 
 ### Added
 - RD-002: Split OVER into **OVER/IN** (in bounds, includes aces and legal net-touch serves) and **OVER/OUT** (cleared net but out long/wide)
